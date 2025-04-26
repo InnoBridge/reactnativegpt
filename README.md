@@ -10,10 +10,71 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Install native UI and development libraries
+   ```bash
+   npm expo install expo-dev-client react-native-reanimated react-native-gesture-handler react-native-redash
+   ```
+   - expo-dev-client: Creates custom development builds that work outside Expo Go
+   - react-native-reanimated: Powers UI animations with native-thread performance
+   - react-native-gesture-handler: Provides native touch handling for swipes, pans, and pinches
+   - react-native-redash: A utility library that makes writing complex animations with react-native-reanimated much easier and cleaner.
+
+   ```
+   npx expo install @react-navigation/drawer
+   ```
+   - @react-navigation/drawer: A drawer navigator for React Navigation
+
+   ```
+   npm install zeego react-native-ios-context-menu react-native-ios-utilities @react-native-menu/menu
+   ```
+   - zeego: Cross-platform context menu library that provides a unified API for both iOS and Android
+   - react-native-ios-context-menu: iOS-specific implementation of native context menus with preview functionality
+   - react-native-ios-utilities: Helper functions for iOS-specific UI elements and interactions
+   - @react-native-menu/menu: Native menu implementation for dropdown and popup menus across platforms
+
+   ```
+   npm expo install expo-build-properties
+   ```
+   - expo-build-properties: Allows customization of native build settings like iOS/Android versions, permissions and compiler options while remaining in Expo's development environment.
+
+
+   ```
+   npx expo install expo-blur expo-document-picker expo-image-picker
+   ```
+   - expo-blur: Creates vlur effect components (like frosted class effects) for creating modern translucent UI elements
+   - expo-document-picker: Lets user select documents frm theri device for uploading/importing files like PDFs, spreadsheets, etc.
+   - expo-image-picker: Provides access to the device's image and video library and camera for selecting or capturing media
+
+   ```
+   npx expo install @shopify/flash-list    
+   ```
+   - @shopify/flash-list: High-performance list component that renders thousands of items with near-native speed, optimnized for complex scrollign interfaces with minimal memory usage.
+
+   ```
+   npx expo install react-native-mmkv
+   ```
+   - react-native-mmkv: An ultra-fast encrypted key-value storage solution for react native applications (30x faster than AsyncStorage) that uses WeChat's MMKV C++ engine to securely store app data with minimal performance impact.
+
+
+3. Prebuild native IOS and Androd folders
+   ```bash
+   npx expo prebuild
+   ```
+
+4. Start the app
 
    ```bash
     npx expo start
+   ```
+
+5. Starting app in IOS
+   ```bash
+    npm run ios
+   ```
+
+6. Reset project to clean state
+   ```bash
+    npm run reset-project
    ```
 
 In the output, you'll find options to open the app in a
@@ -34,6 +95,108 @@ npm run reset-project
 ```
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+
+## Authentication
+### Using Clerk
+https://clerk.com/
+
+Install the following packages
+```bash
+npm install @clerk/clerk-expo
+```
+
+```bash
+npx expo install expo-secure-store
+```
+
+copy over the following key to .env file client side
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
+the CLERK_SECRET_KEY is for the server side
+
+# Routes
+
+```
+npx expo-router-sitemap
+```
+
+list routes in your project
+
+# Auth Flow
+The authflow in an expo project, is why user requests a screen, it
+1. Attempt to navigate to `/`
+2. Check if user is logged in (authenticated)
+- - Yes: open `/`
+- - No: redirect to `/login` 
+
+eg;
+```
+app
+├── (drawer)
+│   └── (chat)
+│       └── new.tsx
+├── index.tsx
+└── login.tsx
+```
+
+The logic for auth flow is in `/app/_layout.tsx`, because this file gets executed before any of the screens gets served.
+
+An issue arises with the root layout files is that we can't currently use redirect in the layout file (will be supported in the future). Grouping folder is supported. 
+
+Grouping folder is denoted by round bracket eg. `/(protected)`
+
+Lets create a grouping folder for our protected routes
+```
+app
+├── (protected)
+│   ├── (drawer)
+│   │   └── (chat)
+│   │       └── new.tsx
+│   ├── _layout.tsx
+│   └── index.tsx
+├── _layout.tsx
+├── index.tsx
+└── login.tsx
+```
+The layout file in our protected group folder `/(protected)` is free to use redirects.
+
+The content in the `/app` folder that is not in `/(protected)` can be accessed without being authenticated.
+
+`/reactnativegpt/app/(protected)/(drawer)/(chat)/new.tsx` is the path of the new.tsx file. The route starts with the app folder, so the path before and including the app folder is not included in the route. 
+
+Since Expo Router is a file-based routing system, every endpoint corresponds to a file.
+
+The rules for URL base routing in Expo.
+1. `index.tsx` is ignored so `app/index.tsx` -> `/`
+2. The extensions are ignored eg.
+`app/(api)/users.tsx` -> `/api/users`
+3. Square brackets denotes dynamic routes eg.
+`app/(api)/(users/[id].tsx)` -> `/api/users/123`
+- - The parameter values replaces the bracket portion at runtime by redirection. eg. `router.push('/users/123')` 
+- - The value can be accessed with `useLocalSearchParams()`
+4. Round brackets denotes grouping folders and is between the app folder and the destination file, we can remove the bracket around them.
+5. `_layout.tsx` does not define any routes. It defines navigation containers and screen presentation, not routes themselves. They control how screens are displayed and organize the navigation hierarchy for their directory.
+
+`/(protected)/(drawer)/(chat)/new.tsx` -> `/protected/drawer/chat/new`
+
+
+All the layout files starting with the root layout file in the app folder are loaded, and finally the screen is rendered. The root layout will always get rendered first, and it will return the first navigator, this will start off the navigation tree for your app. This is why you can't use redirects in your root layout, because if we return a redirect in your root layout instead of a navigator, the navigation tree won't exist because the other layout files in the subtree are not loaded yet.
+
+In the Expo Router:
+1. The root `_layout.tsx` is the entry point for your app's navigation tree.
+2. It must return a navigator component (like `<Stack>`, `<Tabs>`, or `<Drawer>`) to establish the navigation infrastructure.
+3. If you try to use redirects in the root layout (like `router.replace('/login')`), it breaks the navigation tree initialization because:
+- - The redirect attempts to the navigate before the navigation tree exists
+- - The navigator that would handle the redirect hasn't been created yet
+- - The subtree layouts aren't loaded, so there's nowhere to redirect to
+
+This is why:
+- Put auth checking logic in the root layout.
+- Use conditional state variables and `useEffect for redirection
+- Place redirects in nested layout files (like inside `/(protected)/_layout.tsx`)
+- Use the `segments` and auth state to conditionally render content
+
+The root layout needs to establish the navigation foundation before redirects can work properly. This is a fundamental limitation of how navigation trees are constructed in React Navigation/Expo Router.
 
 ## Learn more
 
