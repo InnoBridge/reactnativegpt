@@ -54,7 +54,6 @@ const Page = () => {
     const removeClient = () => {
         setLlmProvider(null);
         clearLlmClient();
-        setLlmProvider(null);
         router.navigate('/(protected)/(drawer)' as any);
     }
 
@@ -70,7 +69,7 @@ const Page = () => {
                     config =  <OpenAIConfigurationForm onConfigure={handleConfigurationSave} />;
                     break;
                 default:
-                    <Text style={styles.label}>No provider selected.</Text>;
+                    config = <Text style={styles.label}>No provider selected.</Text>;
             }
             return (
                 <>
