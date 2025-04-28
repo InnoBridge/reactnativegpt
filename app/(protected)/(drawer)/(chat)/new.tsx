@@ -13,7 +13,7 @@ import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
 import { useMMKVString } from "react-native-mmkv";
 import { keyStorage, storage } from "@/utils/Storage";
-import { getLlmProvider } from "@innobridge/llmclient";
+import { getLlmProvider, getModels, setModel } from "@innobridge/llmclient";
 
 const DUMMY_MESSAGES: Message[] = [
     {
@@ -43,17 +43,31 @@ const NewChat = () => {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES);
     const [height, setHeight] = useState(0);
+    const [llmProvider, setLlmProvider] = useState('');
 
-    const [key, setKey] = useMMKVString('apiKey', keyStorage);
-    const [organization, setOrganization] = useMMKVString('organization', keyStorage);
-    const [gptVersion, setGPTVersion] = useMMKVString('gptVersion', storage);
-    
-    useEffect(() => {        
-        if (getLlmProvider() === null) {
+    const [llmModels, setLlmModels] = useState<string[]>([]);
+    const [llmModel, setLlmModel] = useMMKVString('gptVersion', storage);
+    useEffect(() => {
+        const provider = getLlmProvider();
+        if (provider === null) {
             console.log('No LLM provider set, redirecting to settings');
             router.push("/(protected)/(modal)/settings");
+        } else {
+            setLlmProvider(provider);
+            getModels().then((models) => {
+                console.log('Available models: ', models);
+                setLlmModels(models);
+            });
         }
     }, [router]);
+
+    const getLlmModels = llmModels.map((model) => {
+        return {
+            key: model,
+            title: model, // You could also format this for better display
+            icon: model===llmModel ? "checkmark" : "sparkles"
+        };
+    });
 
     const getCompletion = async (message: string) => {
         console.log('Getting completion for: ', message);
@@ -70,14 +84,11 @@ const NewChat = () => {
                 options={{
                     headerTitle: () => (
                         <HeaderDropDown 
-                            title="ChatGPT" 
-                            items={[
-                                { key: '3.5', title: 'GPT-3.5', icon: 'bolt'},
-                                { key: '4', title: 'GPT-4', icon: 'sparkles'}
-                            ]}
-                            selected={gptVersion}
+                            title={llmProvider} 
+                            items={getLlmModels}
+                            selected={llmModel}
                             onSelect={(key) => {
-                                setGPTVersion(key);
+                                setLlmModel(key);
                             }}
                         />
                     )
