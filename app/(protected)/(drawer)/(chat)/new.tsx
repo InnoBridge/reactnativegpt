@@ -4,7 +4,7 @@ import { View, KeyboardAvoidingView, Platform, StyleSheet, Image } from "react-n
 import { defaultStyles } from "@/constants/Styles";
 import { Stack, Redirect, useRouter } from "expo-router";
 import HeaderDropDown from "@/components/HeaderDropDown";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MessageInput from "@/components/MessageInput";
 import MessageIdeas from "@/components/MessageIdeas";
 import { Message, Role } from "@/utils/Interfaces";
@@ -13,6 +13,7 @@ import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
 import { useMMKVString } from "react-native-mmkv";
 import { keyStorage, storage } from "@/utils/Storage";
+import { getLlmProvider } from "@innobridge/llmclient";
 
 const DUMMY_MESSAGES: Message[] = [
     {
@@ -47,9 +48,12 @@ const NewChat = () => {
     const [organization, setOrganization] = useMMKVString('organization', keyStorage);
     const [gptVersion, setGPTVersion] = useMMKVString('gptVersion', storage);
     
-    if (!key || key === '' || !organization || organization === '') {
-        router.push("/(protected)/(modal)/settings");
-    };
+    useEffect(() => {        
+        if (getLlmProvider() === null) {
+            console.log('No LLM provider set, redirecting to settings');
+            router.push("/(protected)/(modal)/settings");
+        }
+    }, [router]);
 
     const getCompletion = async (message: string) => {
         console.log('Getting completion for: ', message);
