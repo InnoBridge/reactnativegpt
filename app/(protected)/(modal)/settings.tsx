@@ -1,72 +1,127 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Button } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Button, Alert } from "react-native";
 import Colors from "@/constants/Colors";
-import { keyStorage } from "@/utils/Storage";
-import { useMMKVString } from "react-native-mmkv";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { defaultStyles } from "@/constants/Styles";
-import { useRouter } from "expo-router";
+import { useRouter, Stack } from "expo-router";
 import { useAuth } from '@clerk/clerk-expo';
+import HeaderDropDown from "@/components/HeaderDropDown";
+import { 
+    getLlmProvider,
+    getLlmProviders, 
+    LlmConfiguration, 
+    LlmProvider,
+    createLlmClient,
+    clearLlmClient
+} from "@innobridge/llmclient";
+import OllamaConfigurationForm from "@/components/OllamaConfigurationForm";
+import OpenAIConfigurationForm from "@/components/OpenAIConfigurationForm";
 
 const Page = () => {
     const router = useRouter();
     const { signOut } = useAuth();
-    const [key, setKey] = useMMKVString('apiKey', keyStorage);
-    const [organization, setOrganization] = useMMKVString('organization', keyStorage);
 
-    const [apiKey, setApiKey] = useState('');
-    const [org, setOrg] = useState('');
+    const [llmProvider, setLlmProvider] = useState<LlmProvider|null>(null);
+    const [llmProviders, setLlmProviders] = useState<LlmProvider[]>([]);
 
-    const saveApiKey = () => {
-        setKey(apiKey);
-        setOrganization(org);
+    useEffect(() => {
+        // Initialize llmProviders when the component mounts
+        setLlmProviders(getLlmProviders());
+    }, []);
+
+    // Map providers to dropdown items with icons
+    const getProviderIcon = (provider: LlmProvider) => {
+        switch(provider) {
+            case LlmProvider.OPENAI: return 'ladybug';
+            case LlmProvider.OLLAMA: return 'fish';
+            default: return 'code';
+        }
+    };
+
+    const handleConfigurationSave = async (configuration: LlmConfiguration) => {
+        try {
+            
+            // Wait for client creation to complete
+            await createLlmClient(configuration);
+            
+            // Only navigate on success
+            router.navigate('/(protected)/(drawer)' as any);
+        } catch (err) {
+            // Handle any errors
+            Alert.alert('Failed to create LLM client:' + err);
+        }
+    };
+
+    const removeClient = () => {
+        setLlmProvider(null);
+        clearLlmClient();
         router.navigate('/(protected)/(drawer)' as any);
     }
 
-    const removeApiKey = () => {
-        setKey('');
-        setOrganization('');
-    }
+    // Render appropriate configuration form based on provider
+    const renderProviderConfig = () => {
+        let config = <></>;
+        if (getLlmProvider() === null) {
+           switch(llmProvider) {
+                case LlmProvider.OLLAMA:
+                    config = <OllamaConfigurationForm onConfigure={handleConfigurationSave} />;
+                    break;
+                case LlmProvider.OPENAI:
+                    config =  <OpenAIConfigurationForm onConfigure={handleConfigurationSave} />;
+                    break;
+                default:
+                    config = <Text style={styles.label}>No provider selected.</Text>;
+            }
+            return (
+                <>
+                    <Stack.Screen
+                        options={{
+                            headerTitle: () => (
+                                <HeaderDropDown 
+                                    title="Please select a LLM provider." 
+                                    items={llmProviders.map(provider => ({
+                                        key: provider,
+                                        title: provider.charAt(0).toUpperCase() + provider.slice(1),
+                                        icon: getProviderIcon(provider)
+                                    }))}
+                                    selected={llmProvider || undefined}
+                                    onSelect={(key) => {
+                                        // Update the selected provider
+                                        setLlmProvider(key as LlmProvider);
+                                    }}
+                                />
+                            )
+                        }}
+                    />
+            {config}
+            </>
+            )
+        } else {
+            return (
+                <>
+                <Stack.Screen
+                        options={{
+                            headerTitle: "You are currently using " + getLlmProvider()
+                        }}
+                    />
+                    <Text>Please remove current LLM Client to change providers.</Text>
+                    <TouchableOpacity
+                        style={[defaultStyles.btn, { backgroundColor: Colors.primary }]}
+                        onPress={removeClient}>
+                        <Text style={styles.buttonText}>Remove current LLM Client</Text>
+                    </TouchableOpacity>
+                </>
+            )
+        }
+
+    };
 
     return (
         <View style={styles.container}>
-            { key && key !== "" && (
-                <>
-                    <Text style={styles.label}>You are all set!</Text>
-                    <TouchableOpacity
-                        style={[defaultStyles.btn, { backgroundColor: Colors.primary }]}
-                        onPress={removeApiKey}>
-                        <Text style={styles.buttonText}>Remove API Key</Text>
-                    </TouchableOpacity>
-                </>
-            )}
+  
 
-            {(!key || key === '') && (
-                <>
-                    <Text style={styles.label}>API Key & Organization:</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={apiKey}
-                        onChangeText={setApiKey}
-                        placeholder="Enter your API key"
-                        autoCorrect={false}
-                        autoCapitalize="none"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        value={org}
-                        onChangeText={setOrg}
-                        placeholder="Your organization"
-                        autoCorrect={false}
-                        autoCapitalize="none"
-                    />
-
-                    <TouchableOpacity
-                        style={[defaultStyles.btn, { backgroundColor: Colors.primary}]}
-                        onPress={saveApiKey}>
-                        <Text style={styles.buttonText}>Save API Key</Text>
-                    </TouchableOpacity>
-                </>
-            )}            
+            {/* Render the appropriate configuration form */}
+            {renderProviderConfig()}
+                      
             <Button title="Sign Out" onPress={() => signOut()} color={Colors.grey} />
         </View>
     );
