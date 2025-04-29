@@ -55,7 +55,8 @@ const NewChat = () => {
             router.push("/(protected)/(modal)/settings");
         } else {
             setLlmProvider(provider);
-            setCurrentModel(getModel() === null ? undefined : getModel());
+            const model = getModel();
+            setCurrentModel(model === null ? undefined : model);
             getModels().then((models) => {
                 setLlmModels(models);
             });
