@@ -2,7 +2,7 @@
 
 import { View, KeyboardAvoidingView, Platform, StyleSheet, Image } from "react-native"
 import { defaultStyles } from "@/constants/Styles";
-import { Stack, Redirect, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import HeaderDropDown from "@/components/HeaderDropDown";
 import { useState, useEffect } from 'react';
 import MessageInput from "@/components/MessageInput";
@@ -11,10 +11,13 @@ import { Message, Role } from "@/utils/Interfaces";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
-import { useMMKVString } from "react-native-mmkv";
-import { keyStorage, storage } from "@/utils/Storage";
-import { getLlmProvider, getModels, getModel, setModel } from "@innobridge/llmclient";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import { 
+    getLlmProvider, 
+    getModels, 
+    getModel, 
+    setModel,
+    Model
+} from "@innobridge/llmclient";
 
 const DUMMY_MESSAGES: Message[] = [
     {
@@ -45,8 +48,8 @@ const NewChat = () => {
     const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES);
     const [height, setHeight] = useState(0);
     const [llmProvider, setLlmProvider] = useState('');
-    const [llmModels, setLlmModels] = useState<string[]>([]);
-    const [currentModel, setCurrentModel] = useState<string | undefined>(undefined);
+    const [llmModels, setLlmModels] = useState<Model[]>([]);
+    const [currentModel, setCurrentModel] = useState<Model | undefined>(undefined);
 
     useEffect(() => {
         const provider = getLlmProvider();
@@ -63,11 +66,11 @@ const NewChat = () => {
         }
     }, [router]);
 
-    const getLlmModels = llmModels.map((model) => {
+    const getLlmModels = llmModels.map((model: Model) => {
         return {
-            key: model,
-            title: model, // You could also format this for better display
-            icon: model === currentModel ? "checkmark" : "sparkles"
+            key: model.id,
+            title: model.id, // You could also format this for better display
+            icon: currentModel && model.id === currentModel.id ? "checkmark" : "sparkles"
         };
     });
 
@@ -88,10 +91,13 @@ const NewChat = () => {
                         <HeaderDropDown 
                             title={llmProvider} 
                             items={getLlmModels}
-                            selected={currentModel}
+                            selected={currentModel && currentModel.id}
                             onSelect={(key) => {
-                                setModel(key);
-                                setCurrentModel(key);
+                                const model = llmModels.find((model) => model.id === key);
+                                if (model) {
+                                    setModel(model);
+                                    setCurrentModel(model);
+                                }
                             }}
                         />
                     )
