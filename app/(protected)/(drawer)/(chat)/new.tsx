@@ -69,7 +69,7 @@ const NewChat = () => {
     const getLlmModels = llmModels.map((model: Model) => {
         return {
             key: model.id,
-            title: model.id, // You could also format this for better display
+            title: model.id,
             icon: currentModel && model.id === currentModel.id ? "checkmark" : "sparkles"
         };
     });
