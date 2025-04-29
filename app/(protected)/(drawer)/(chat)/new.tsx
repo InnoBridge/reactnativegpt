@@ -13,7 +13,8 @@ import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
 import { useMMKVString } from "react-native-mmkv";
 import { keyStorage, storage } from "@/utils/Storage";
-import { getLlmProvider, getModels, setModel } from "@innobridge/llmclient";
+import { getLlmProvider, getModels, getModel, setModel } from "@innobridge/llmclient";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const DUMMY_MESSAGES: Message[] = [
     {
@@ -44,9 +45,9 @@ const NewChat = () => {
     const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES);
     const [height, setHeight] = useState(0);
     const [llmProvider, setLlmProvider] = useState('');
-
     const [llmModels, setLlmModels] = useState<string[]>([]);
-    const [llmModel, setLlmModel] = useMMKVString('gptVersion', storage);
+    const [currentModel, setCurrentModel] = useState<string | undefined>(undefined);
+
     useEffect(() => {
         const provider = getLlmProvider();
         if (provider === null) {
@@ -54,8 +55,8 @@ const NewChat = () => {
             router.push("/(protected)/(modal)/settings");
         } else {
             setLlmProvider(provider);
+            setCurrentModel(getModel() === null ? undefined : getModel());
             getModels().then((models) => {
-                console.log('Available models: ', models);
                 setLlmModels(models);
             });
         }
@@ -65,7 +66,7 @@ const NewChat = () => {
         return {
             key: model,
             title: model, // You could also format this for better display
-            icon: model===llmModel ? "checkmark" : "sparkles"
+            icon: model === currentModel ? "checkmark" : "sparkles"
         };
     });
 
@@ -86,9 +87,10 @@ const NewChat = () => {
                         <HeaderDropDown 
                             title={llmProvider} 
                             items={getLlmModels}
-                            selected={llmModel}
+                            selected={currentModel}
                             onSelect={(key) => {
-                                setLlmModel(key);
+                                setModel(key);
+                                setCurrentModel(key);
                             }}
                         />
                     )
