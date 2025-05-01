@@ -13,10 +13,11 @@ import * as DocumentPicker from 'expo-document-picker';
 const ATouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export type MessageInputProps = {
+    disabled?: boolean;
     onShouldSendMessage: (message: string) => void;
 };
 
-const MessageInput: React.FC<MessageInputProps> = ({ onShouldSendMessage }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ disabled, onShouldSendMessage }) => {
     const [message, setMessage] = useState('');
     const { bottom } = useSafeAreaInsets();
     const expanded = useSharedValue(0);
@@ -56,6 +57,24 @@ const MessageInput: React.FC<MessageInputProps> = ({ onShouldSendMessage }) => {
         };
     });
 
+    const renderSendButton = (disabled: boolean | undefined, message: string) => {
+        if (disabled) return;
+
+        if (message.length > 0 ) {
+            return (
+                <TouchableOpacity onPress={onSend}>
+                    <Ionicons name="arrow-up-circle-outline" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+            ); 
+         } else { 
+            return (
+                <TouchableOpacity>
+                    <FontAwesome5 name="headphones" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+            );
+        }
+    };
+
     return (
         <BlurView intensity={90} tint="extraLight" style={{ paddingBottom: bottom, paddingTop: 10 }}>
             <View style={styles.row}>
@@ -87,15 +106,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onShouldSendMessage }) => {
                     onFocus={collapseItems}
                 />
 
-                {message.length > 0 ? (
-                    <TouchableOpacity onPress={onSend}>
-                        <Ionicons name="arrow-up-circle-outline" size={24} color={Colors.grey} />
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity>
-                        <FontAwesome5 name="headphones" size={24} color={Colors.grey} />
-                    </TouchableOpacity>
-                )}
+                { renderSendButton(disabled, message) }
             </View>
         </BlurView>
     )

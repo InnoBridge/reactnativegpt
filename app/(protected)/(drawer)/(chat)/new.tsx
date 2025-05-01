@@ -21,6 +21,7 @@ const NewChat = () => {
     const [llmProvider, setLlmProvider] = useState('');
     const [llmModels, setLlmModels] = useState<model.Model[]>([]);
     const [currentModel, setCurrentModel] = useState<model.Model | undefined>(undefined);
+    const [callingLlm, setCallingLlm] = useState(false);
 
     useEffect(() => {
         const provider = getLlmProvider();
@@ -46,24 +47,34 @@ const NewChat = () => {
     });
 
     const getCompletion = async (message: string) => {
-        console.log('Getting completion for: ', message);
+        if (callingLlm) {
+            return;
+        }
+        if (getModel() === null) {
+            Alert.alert('Error', 'No model set. Please set the model before sending a message.');
+            return;
+        }
         if (messages.length === 0) {
             // Create chat later, store to DB
         }
-        setMessages((prevMessages) => [
-            ...prevMessages, 
-            { content: message, role: Role.USER }]);
+        setCallingLlm(true);
+        setMessages(prevMessages => [
+            ...prevMessages,
+            { content: message, role: Role.USER }
+        ]);
         const chatRequest: chatRequest.ChatRequest = {
             messages: messages,        
         };
         try {
             const response = await createCompletion(chatRequest);
-            setMessages((prevMessages) => [
+            setMessages(prevMessages => [
                 ...prevMessages,
                 { content: response.choices[0].message.content as string, role: Role.BOT }
             ]);
         } catch (error) {
             Alert.alert('Error', 'Failed to get completion: ' + error);
+        } finally {
+            setCallingLlm(false);
         }
     };
 
@@ -122,7 +133,10 @@ const NewChat = () => {
                 {messages.length === 0 && (
                     <MessageIdeas onSelectCard={getCompletion} />
                 )}
-                <MessageInput onShouldSendMessage={getCompletion} />
+                <MessageInput 
+                    disabled={callingLlm}
+                    onShouldSendMessage={getCompletion} 
+                />
             </KeyboardAvoidingView>
         </View>
     );
