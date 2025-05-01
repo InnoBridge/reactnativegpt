@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
 import Colors from '@/constants/Colors'
-import { LlmConfiguration, LlmProvider, OllamaConfiguration } from '@innobridge/llmclient'
+import { configuration as config } from '@innobridge/llmclient'
 import { defaultStyles } from '@/constants/Styles'
 
 type OllamaProps = {
-    onConfigure: (config: LlmConfiguration) => void
+    onConfigure: (config: config.LlmConfiguration) => void
 }
 
 const OllamaConfigurationForm: React.FC<OllamaProps> = ({ onConfigure }) => {
@@ -16,8 +16,8 @@ const OllamaConfigurationForm: React.FC<OllamaProps> = ({ onConfigure }) => {
     const onConfigurationSubmit = () => {
         const llmConfiguration = {
             baseURL: baseURL,
-            provider: LlmProvider.OLLAMA,
-        } as OllamaConfiguration;
+            provider: config.LlmProvider.OLLAMA,
+        } as config.OllamaConfiguration;
         if (apiKey !== '') {
             llmConfiguration.apiKey = apiKey;
         } 

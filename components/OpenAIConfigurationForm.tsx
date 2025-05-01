@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
 import Colors from '@/constants/Colors'
-import { LlmConfiguration, LlmProvider, OpenAIConfiguration } from '@innobridge/llmclient'
+import { configuration as config } from '@innobridge/llmclient'
 import { defaultStyles } from '@/constants/Styles'
 
 type OpenAIProps = {
-    onConfigure: (config: LlmConfiguration) => void
+    onConfigure: (config: config.LlmConfiguration) => void
 }
 
 const OpenAIConfigurationForm: React.FC<OpenAIProps> = ({ onConfigure }) => {
@@ -15,8 +15,8 @@ const OpenAIConfigurationForm: React.FC<OpenAIProps> = ({ onConfigure }) => {
     const onConfigurationSubmit = () => {
         const llmConfiguration = {
             apiKey: apiKey,
-            provider: LlmProvider.OPENAI,
-        } as OpenAIConfiguration;
+            provider: config.LlmProvider.OPENAI,
+        } as config.OpenAIConfiguration;
         
         if (organization !== '') {
             llmConfiguration.organization = organization;
