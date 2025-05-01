@@ -58,12 +58,15 @@ const NewChat = () => {
             // Create chat later, store to DB
         }
         setCallingLlm(true);
-        setMessages(prevMessages => [
-            ...prevMessages,
+
+        const updatedMessages: requestMessage.Message[] = [
+            ...messages, 
             { content: message, role: Role.USER }
-        ]);
+        ];
+
+        setMessages(updatedMessages);
         const chatRequest: chatRequest.ChatRequest = {
-            messages: messages,        
+            messages: updatedMessages,        
         };
         try {
             const response = await createCompletion(chatRequest);
