@@ -1,55 +1,27 @@
 // export { default } from '@/components/ChatPage';
 
-import { View, KeyboardAvoidingView, Platform, StyleSheet, Image } from "react-native"
+import { View, KeyboardAvoidingView, Platform, StyleSheet, Image, Alert } from "react-native"
 import { defaultStyles } from "@/constants/Styles";
 import { Stack, useRouter } from "expo-router";
 import HeaderDropDown from "@/components/HeaderDropDown";
 import { useState, useEffect } from 'react';
 import MessageInput from "@/components/MessageInput";
 import MessageIdeas from "@/components/MessageIdeas";
-import { Message, Role } from "@/utils/Interfaces";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
-import { 
-    getLlmProvider, 
-    getModels, 
-    getModel, 
-    setModel,
-    Model
-} from "@innobridge/llmclient";
-
-const DUMMY_MESSAGES: Message[] = [
-    {
-        content: 'Hello, how can I help you today?',
-        role: Role.Bot,
-    },
-    {
-        content: 'I need help with a React Native issue. My drawer navigation isn\'t working.',
-        role: Role.User,
-    },
-    {
-        content: 'I\'d be happy to help with your drawer navigation issue. Could you describe what\'s happening when you try to use it?',
-        role: Role.Bot,
-    },
-    {
-        content: 'When I click the hamburger menu, nothing happens. I\'m trying to use DrawerActions.toggleDrawer() but getting an error.',
-        role: Role.User,
-    },
-    {
-        content: 'That\'s a common issue with Expo Router and drawer navigation. When using the screenOptions prop, you should use it as a function that receives navigation. Try updating your code to: screenOptions={({ navigation }) => ({ ... })} and then use that navigation object to dispatch the drawer action.',
-        role: Role.Bot,
-        prompt: 'Provide a helpful solution for React Native drawer navigation issue'
-    }
-];
+import { api, model, chatRequest, enums, requestMessage, responseMessage } from "@innobridge/llmclient";
+const { getLlmProvider, getModels, getModel, setModel, createCompletion } = api;
+const { Role } = enums;
 
 const NewChat = () => {
     const router = useRouter();
-    const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES);
+    const [messages, setMessages] = useState<requestMessage.Message[]>([]);
     const [height, setHeight] = useState(0);
     const [llmProvider, setLlmProvider] = useState('');
-    const [llmModels, setLlmModels] = useState<Model[]>([]);
-    const [currentModel, setCurrentModel] = useState<Model | undefined>(undefined);
+    const [llmModels, setLlmModels] = useState<model.Model[]>([]);
+    const [currentModel, setCurrentModel] = useState<model.Model | undefined>(undefined);
+    const [callingLlm, setCallingLlm] = useState(false);
 
     useEffect(() => {
         const provider = getLlmProvider();
@@ -61,12 +33,12 @@ const NewChat = () => {
             const model = getModel();
             setCurrentModel(model === null ? undefined : model);
             getModels().then((models) => {
-                setLlmModels(models);
+                setLlmModels(models.data);
             });
         }
     }, [router]);
 
-    const getLlmModels = llmModels.map((model: Model) => {
+    const getLlmModels = llmModels.map((model: model.Model) => {
         return {
             key: model.id,
             title: model.id,
@@ -75,7 +47,38 @@ const NewChat = () => {
     });
 
     const getCompletion = async (message: string) => {
-        console.log('Getting completion for: ', message);
+        if (callingLlm) {
+            return;
+        }
+        if (getModel() === null) {
+            Alert.alert('Error', 'No model set. Please set the model before sending a message.');
+            return;
+        }
+        if (messages.length === 0) {
+            // Create chat later, store to DB
+        }
+        setCallingLlm(true);
+
+        const updatedMessages: requestMessage.Message[] = [
+            ...messages, 
+            { content: message, role: Role.USER }
+        ];
+
+        setMessages(updatedMessages);
+        const chatRequest: chatRequest.ChatRequest = {
+            messages: updatedMessages,        
+        };
+        try {
+            const response = await createCompletion(chatRequest);
+            setMessages(prevMessages => [
+                ...prevMessages,
+                { content: response.choices[0].message.content as string, role: Role.BOT }
+            ]);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to get completion: ' + error);
+        } finally {
+            setCallingLlm(false);
+        }
     };
 
     const onLayout = (event: any) => {
@@ -133,7 +136,10 @@ const NewChat = () => {
                 {messages.length === 0 && (
                     <MessageIdeas onSelectCard={getCompletion} />
                 )}
-                <MessageInput onShouldSendMessage={getCompletion} />
+                <MessageInput 
+                    disabled={callingLlm}
+                    onShouldSendMessage={getCompletion} 
+                />
             </KeyboardAvoidingView>
         </View>
     );

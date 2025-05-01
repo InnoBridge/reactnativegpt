@@ -39,3 +39,9 @@ app-example
 
 # Remove env variable
 .env
+
+# Ignore local build artifact for testing
+reactnativegpt*.tgz
+
+# vscode continue plugin
+.continue

@@ -1,20 +1,27 @@
 import { StyleSheet } from 'react-native';
 import Colors from '@/constants/Colors';
 import { Text, View, Image } from 'react-native';
-import { Message, Role } from '@/utils/Interfaces';
+// import { Message, Role } from '@/utils/Interfaces';
+import { requestMessage, enums } from '@innobridge/llmclient';
 
+const { Role } = enums;
 
-const ChatMessage: React.FC<Message> = ({ content, role, imageUrl, prompt }) => {
+type ChatMessageProps = requestMessage.Message & {
+    imageUrl?: string;
+    prompt?: string;
+}
+
+const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl, prompt }) => {
     return (
         <View style={styles.row}>
-            {role == Role.Bot ? (
+            {role == Role.BOT ? (
                 <View style={[styles.item]}>
                     <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
                 </View>
             ) : (
                 <Image source={{ uri: 'https://galaxies.dev/img/meerkat_2.jpg'}} style={styles.avatar} />
             )}
-            <Text style={styles.text}>{content}</Text>
+            <Text style={styles.text}>{content as string}</Text>
         </View>
     );
 };

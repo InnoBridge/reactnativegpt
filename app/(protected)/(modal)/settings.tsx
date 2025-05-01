@@ -5,23 +5,18 @@ import { defaultStyles } from "@/constants/Styles";
 import { useRouter, Stack } from "expo-router";
 import { useAuth } from '@clerk/clerk-expo';
 import HeaderDropDown from "@/components/HeaderDropDown";
-import { 
-    getLlmProvider,
-    getLlmProviders, 
-    LlmConfiguration, 
-    LlmProvider,
-    createLlmClient,
-    clearLlmClient
-} from "@innobridge/llmclient";
+import { configuration as config, api } from "@innobridge/llmclient";
 import OllamaConfigurationForm from "@/components/OllamaConfigurationForm";
 import OpenAIConfigurationForm from "@/components/OpenAIConfigurationForm";
+
+const { getLlmProvider, getLlmProviders, createLlmClient, clearLlmClient } = api;
 
 const Page = () => {
     const router = useRouter();
     const { signOut } = useAuth();
 
-    const [llmProvider, setLlmProvider] = useState<LlmProvider|null>(null);
-    const [llmProviders, setLlmProviders] = useState<LlmProvider[]>([]);
+    const [llmProvider, setLlmProvider] = useState<config.LlmProvider|null>(null);
+    const [llmProviders, setLlmProviders] = useState<config.LlmProvider[]>([]);
 
     useEffect(() => {
         // Initialize llmProviders when the component mounts
@@ -29,15 +24,15 @@ const Page = () => {
     }, []);
 
     // Map providers to dropdown items with icons
-    const getProviderIcon = (provider: LlmProvider) => {
+    const getProviderIcon = (provider: config.LlmProvider) => {
         switch(provider) {
-            case LlmProvider.OPENAI: return 'ladybug';
-            case LlmProvider.OLLAMA: return 'fish';
+            case config.LlmProvider.OPENAI: return 'ladybug';
+            case config.LlmProvider.OLLAMA: return 'fish';
             default: return 'code';
         }
     };
 
-    const handleConfigurationSave = async (configuration: LlmConfiguration) => {
+    const handleConfigurationSave = async (configuration: config.LlmConfiguration) => {
         try {
             
             // Wait for client creation to complete
@@ -59,17 +54,17 @@ const Page = () => {
 
     // Render appropriate configuration form based on provider
     const renderProviderConfig = () => {
-        let config = <></>;
+        let configComponent = <></>;
         if (getLlmProvider() === null) {
            switch(llmProvider) {
-                case LlmProvider.OLLAMA:
-                    config = <OllamaConfigurationForm onConfigure={handleConfigurationSave} />;
+                case config.LlmProvider.OLLAMA:
+                    configComponent = <OllamaConfigurationForm onConfigure={handleConfigurationSave} />;
                     break;
-                case LlmProvider.OPENAI:
-                    config =  <OpenAIConfigurationForm onConfigure={handleConfigurationSave} />;
+                case config.LlmProvider.OPENAI:
+                    configComponent =  <OpenAIConfigurationForm onConfigure={handleConfigurationSave} />;
                     break;
                 default:
-                    config = <Text style={styles.label}>No provider selected.</Text>;
+                    configComponent = <Text style={styles.label}>No provider selected.</Text>;
             }
             return (
                 <>
@@ -86,13 +81,13 @@ const Page = () => {
                                     selected={llmProvider || undefined}
                                     onSelect={(key) => {
                                         // Update the selected provider
-                                        setLlmProvider(key as LlmProvider);
+                                        setLlmProvider(key as config.LlmProvider);
                                     }}
                                 />
                             )
                         }}
                     />
-            {config}
+            {configComponent}
             </>
             )
         } else {
