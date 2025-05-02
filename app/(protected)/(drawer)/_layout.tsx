@@ -9,8 +9,9 @@ import { TextInput } from 'react-native-gesture-handler';
 import { DrawerActions } from '@react-navigation/native';
 import { useEffect } from 'react';
 import { api, configuration } from '@innobridge/llmclient';
+import * as SecureStore from 'expo-secure-store';
 
-const { getLlmProvider } = api;
+const { getLlmProvider, createLlmClient } = api;
 const { LlmProvider } = configuration;
 
 export const CustomDrawerContent = (props: any) => {
@@ -99,11 +100,20 @@ const Layout = () => {
     const router = useRouter();
 
     useEffect(() => {
-        const provider = getLlmProvider();
-        if (provider === null) {
-            console.log('No LLM provider set, redirecting to settings');
-            router.push("/(protected)/(modal)/settings");
-        }
+        (async () => {
+            const config = await SecureStore.getItemAsync("llmConfig");
+            let provider = getLlmProvider();
+            if (config && !provider) {
+                const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
+                await createLlmClient(savedConfig);
+                provider = getLlmProvider();
+            }  
+                        
+            if (provider === null) {
+                console.log('No LLM provider set in drawer, redirecting to settings');
+                router.push("/(protected)/(modal)/settings");
+            }
+        })()
     }, [router]);
 
     return (

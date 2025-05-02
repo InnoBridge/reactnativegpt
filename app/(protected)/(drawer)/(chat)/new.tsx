@@ -10,8 +10,9 @@ import MessageIdeas from "@/components/MessageIdeas";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
-import { api, model, chatRequest, enums, requestMessage } from "@innobridge/llmclient";
-const { getLlmProvider, getModels, getModel, setModel, createCompletion } = api;
+import * as SecureStore from "expo-secure-store";
+import { api, model, chatRequest, enums, requestMessage, configuration } from "@innobridge/llmclient";
+const { createLlmClient, getLlmProvider, getModels, getModel, setModel, createCompletion } = api;
 const { Role } = enums;
 
 const NewChat = () => {
@@ -24,18 +25,27 @@ const NewChat = () => {
     const [callingLlm, setCallingLlm] = useState(false);
 
     useEffect(() => {
-        const provider = getLlmProvider();
-        if (provider === null) {
-            console.log('No LLM provider set, redirecting to settings');
-            router.push("/(protected)/(modal)/settings");
-        } else {
-            setLlmProvider(provider);
-            const model = getModel();
-            setCurrentModel(model === null ? undefined : model);
-            getModels().then((models) => {
-                setLlmModels(models.data);
-            });
-        }
+        (async () => {
+            const config = await SecureStore.getItemAsync("llmConfig");
+            let provider = getLlmProvider();
+            if (config && !provider) {
+                const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
+                await createLlmClient(savedConfig);
+                provider = getLlmProvider();
+            }  
+
+            if (provider === null) {
+                console.log('No LLM provider set in new, redirecting to settings');
+                router.push("/(protected)/(modal)/settings");
+            } else {
+                setLlmProvider(provider);
+                const model = getModel();
+                setCurrentModel(model === null ? undefined : model);
+                getModels().then((models) => {
+                    setLlmModels(models.data);
+                });
+            }
+        })();
     }, [router]);
 
     const getLlmModels = llmModels.map((model: model.Model) => {

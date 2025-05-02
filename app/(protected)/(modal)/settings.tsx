@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { defaultStyles } from "@/constants/Styles";
 import { useRouter, Stack } from "expo-router";
 import { useAuth } from '@clerk/clerk-expo';
+import * as SecureStore from "expo-secure-store";
 import HeaderDropDown from "@/components/HeaderDropDown";
 import { configuration as config, api } from "@innobridge/llmclient";
 import OllamaConfigurationForm from "@/components/OllamaConfigurationForm";
@@ -17,11 +18,23 @@ const Page = () => {
 
     const [llmProvider, setLlmProvider] = useState<config.LlmProvider|null>(null);
     const [llmProviders, setLlmProviders] = useState<config.LlmProvider[]>([]);
+    
 
     useEffect(() => {
-        // Initialize llmProviders when the component mounts
-        setLlmProviders(getLlmProviders());
-    }, []);
+        (async () => {
+          try {
+            setLlmProviders(getLlmProviders());
+            const config = await SecureStore.getItemAsync("llmConfig");
+            if (config && !getLlmProvider()) {
+              const savedConfig: config.LlmConfiguration = JSON.parse(config);
+              await createLlmClient(savedConfig);
+              setLlmProvider(savedConfig.provider);
+            }
+          } catch (e) {
+            console.error("Error restoring LLM config:", e);
+          }
+        })();
+      }, []);
 
     // Map providers to dropdown items with icons
     const getProviderIcon = (provider: config.LlmProvider) => {
@@ -37,6 +50,8 @@ const Page = () => {
             
             // Wait for client creation to complete
             await createLlmClient(configuration);
+
+            await SecureStore.setItemAsync('llmConfig', JSON.stringify(configuration));
             
             // Only navigate on success
             router.navigate('/(protected)/(drawer)' as any);
@@ -46,9 +61,10 @@ const Page = () => {
         }
     };
 
-    const removeClient = () => {
-        setLlmProvider(null);
+    const removeClient = async () => {
         clearLlmClient();
+        await SecureStore.deleteItemAsync("llmConfig");
+        setLlmProvider(null);
         router.navigate('/(protected)/(drawer)' as any);
     }
 
