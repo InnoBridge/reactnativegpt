@@ -14,7 +14,7 @@ type ChatMessageProps = requestMessage.Message & {
 const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl, prompt }) => {
     return (
         <View style={styles.row}>
-            {role == Role.BOT ? (
+            {role === Role.BOT ? (
                 <View style={[styles.item]}>
                     <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
                 </View>
