@@ -8,6 +8,10 @@ import { DrawerContentScrollView, DrawerItemList,useDrawerStatus } from '@react-
 import { TextInput } from 'react-native-gesture-handler';
 import { DrawerActions } from '@react-navigation/native';
 import { useEffect } from 'react';
+import { api, configuration } from '@innobridge/llmclient';
+
+const { getLlmProvider } = api;
+const { LlmProvider } = configuration;
 
 export const CustomDrawerContent = (props: any) => {
     const router = useRouter();
@@ -94,6 +98,14 @@ const Layout = () => {
     const dimensions = useWindowDimensions();
     const router = useRouter();
 
+    useEffect(() => {
+        const provider = getLlmProvider();
+        if (provider === null) {
+            console.log('No LLM provider set, redirecting to settings');
+            router.push("/(protected)/(modal)/settings");
+        }
+    }, [router]);
+
     return (
         <Drawer
             drawerContent={CustomDrawerContent}
@@ -169,7 +181,7 @@ const Layout = () => {
                     )
                 }} 
             /> */}
-            <Drawer.Screen 
+             <Drawer.Screen 
                 name='dalle' 
                 options={{
                     title: 'Dall.E',
@@ -180,7 +192,13 @@ const Layout = () => {
                                 style={styles.dallEImage}
                             />
                         </View>
-                    )
+                    ),
+                    drawerItemStyle: {
+                        display:
+                          getLlmProvider() === LlmProvider.OPENAI
+                            ? "flex"
+                            : "none",
+                    },
                 }}
                 listeners={{
                     drawerItemPress: (e) => {

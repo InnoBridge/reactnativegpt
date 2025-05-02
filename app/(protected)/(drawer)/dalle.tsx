@@ -1,7 +1,8 @@
-import { View, Text } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { defaultStyles } from "@/constants/Styles";
 import HeaderDropDown from "@/components/HeaderDropDown";
 import { Stack } from "expo-router";
+import Colors from "@/constants/Colors";
 
 const Page = () => {
     return (
@@ -23,6 +24,23 @@ const Page = () => {
             />
         </View>
     )
-}
+};
+
+const styles = StyleSheet.create({
+    logoContainer: {
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 50,
+        height: 50,
+        backgroundColor: Colors.black,
+        borderRadius: 50
+    },
+    image: {
+        width: 30,
+        height: 30,
+        resizeMode: 'cover'
+    }
+});
 
 export default Page;

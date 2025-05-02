@@ -55,7 +55,7 @@ function InitialLayout() {
     if (isSignedIn && !inAuthGroup) {
       // Bring the user inside
       // router.replace('/(protected)/(drawer)/(chat)/new');
-       router.replace('/(protected)/(drawer)/dalle');
+       router.replace('/(protected)/(drawer)/(chat)/new');
     } else if (!isSignedIn) {
       // Kick the user out
       router.replace('/');
