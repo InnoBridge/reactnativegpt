@@ -12,7 +12,7 @@ const { LlmProvider } = configuration;
 const Page = () => {
     const router = useRouter();
     const [height, setHeight] = useState(0);
-    const [messsages, setMessages] = useState<requestMessage.Message[]>([]);
+    const [messages, setMessages] = useState<requestMessage.Message[]>([]);
     const [working, setWorking] = useState(false);
     const [llmProvider, setLlmProvider] = useState('');
     const [llmModels, setLlmModels] = useState<model.Model[]>([]);
