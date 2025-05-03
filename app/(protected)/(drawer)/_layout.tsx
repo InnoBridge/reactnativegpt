@@ -96,25 +96,6 @@ const Layout = () => {
     const dimensions = useWindowDimensions();
     const router = useRouter();
 
-    // console.log("getLlmProvider", getLlmProvider());
-
-    // useEffect(() => {
-    //     (async () => {
-    //         const config = await SecureStore.getItemAsync("llmConfig");
-    //         let provider = getLlmProvider();
-    //         if (config && !provider) {
-    //             const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
-    //             await createLlmClient(savedConfig);
-    //             provider = getLlmProvider();
-    //         }  
-                        
-    //         if (provider === null) {
-    //             console.log('No LLM provider set in drawer, redirecting to settings');
-    //             router.push("/(protected)/(modal)/settings");
-    //         }
-    //     })()
-    // }, [router]);
-
     return (
         <Drawer
             drawerContent={CustomDrawerContent}
