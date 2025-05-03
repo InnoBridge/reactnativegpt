@@ -60,8 +60,12 @@ function InitialLayout() {
       if (isSignedIn && !inAuthGroup) {
         const config = await SecureStore.getItemAsync("llmConfig");
         if (config) {
-          const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
-          await createLlmClient(savedConfig);
+          try {
+            const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
+            await createLlmClient(savedConfig);
+          } catch (error) {
+            console.error("Failed to parse configuration or create LLM client:", error);
+          }  
         }  
         router.replace('/(protected)/(drawer)/(chat)/new');
       } else if (!isSignedIn) {
