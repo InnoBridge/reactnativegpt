@@ -10,9 +10,8 @@ import MessageIdeas from "@/components/MessageIdeas";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
-import * as SecureStore from "expo-secure-store";
-import { api, model, chatRequest, enums, requestMessage, configuration } from "@innobridge/llmclient";
-const { createLlmClient, getLlmProvider, getModels, getModel, setModel, createCompletion } = api;
+import { api, model, chatRequest, enums, requestMessage } from "@innobridge/llmclient";
+const { getLlmProvider, getModels, getModel, setModel, createCompletion } = api;
 const { Role } = enums;
 
 const NewChat = () => {
@@ -93,7 +92,7 @@ const NewChat = () => {
                 options={{
                     headerTitle: () => (
                         <HeaderDropDown 
-                            title={llmProvider} 
+                            title={`Chat ${llmProvider}`} 
                             items={getLlmModels}
                             selected={currentModel && currentModel.id}
                             onSelect={(key) => {
