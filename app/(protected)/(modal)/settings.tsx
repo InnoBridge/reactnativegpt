@@ -8,6 +8,7 @@ import HeaderDropDown from "@/components/HeaderDropDown";
 import { configuration as config, api } from "@innobridge/llmclient";
 import OllamaConfigurationForm from "@/components/OllamaConfigurationForm";
 import OpenAIConfigurationForm from "@/components/OpenAIConfigurationForm";
+import * as SecureStore from 'expo-secure-store';
 
 const { getLlmProvider, getLlmProviders, createLlmClient, clearLlmClient } = api;
 
@@ -37,7 +38,9 @@ const Page = () => {
             
             // Wait for client creation to complete
             await createLlmClient(configuration);
-            
+
+            await SecureStore.setItemAsync('llmConfig', JSON.stringify(configuration));
+                        
             // Only navigate on success
             router.replace('/(protected)/(drawer)' as any);
         } catch (err) {
@@ -46,9 +49,10 @@ const Page = () => {
         }
     };
 
-    const removeClient = () => {
-        setLlmProvider(null);
+    const removeClient = async () => {
         clearLlmClient();
+        await SecureStore.deleteItemAsync("llmConfig");
+        setLlmProvider(null);
         router.replace('/(protected)/(drawer)' as any);
     }
 
