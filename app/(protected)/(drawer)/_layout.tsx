@@ -22,9 +22,6 @@ export const CustomDrawerContent = (props: any) => {
     // const [history, setHistory] = useState<Chat[]>([]);    
     // const router = useRouter();
 
-    useEffect(() => {
-        console.log('Drawer status:', useDrawerStatus);
-    }, [isDrawerOpen])
 
     // useEffect(() => {
     //     loadChats();
@@ -85,7 +82,7 @@ export const CustomDrawerContent = (props: any) => {
                 backgroundColor: Colors.light
             }}>
                 <TouchableOpacity
-                    onPress={() => router.push("/(protected)/(modal)/settings")}
+                    onPress={() => router.replace("/(protected)/(modal)/settings")}
                     style={styles.footer}>
                     <Text>Settings</Text>
                     <Ionicons name="settings-outline" size={24} color={Colors.greyLight} />
@@ -99,22 +96,24 @@ const Layout = () => {
     const dimensions = useWindowDimensions();
     const router = useRouter();
 
-    useEffect(() => {
-        (async () => {
-            const config = await SecureStore.getItemAsync("llmConfig");
-            let provider = getLlmProvider();
-            if (config && !provider) {
-                const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
-                await createLlmClient(savedConfig);
-                provider = getLlmProvider();
-            }  
+    // console.log("getLlmProvider", getLlmProvider());
+
+    // useEffect(() => {
+    //     (async () => {
+    //         const config = await SecureStore.getItemAsync("llmConfig");
+    //         let provider = getLlmProvider();
+    //         if (config && !provider) {
+    //             const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
+    //             await createLlmClient(savedConfig);
+    //             provider = getLlmProvider();
+    //         }  
                         
-            if (provider === null) {
-                console.log('No LLM provider set in drawer, redirecting to settings');
-                router.push("/(protected)/(modal)/settings");
-            }
-        })()
-    }, [router]);
+    //         if (provider === null) {
+    //             console.log('No LLM provider set in drawer, redirecting to settings');
+    //             router.push("/(protected)/(modal)/settings");
+    //         }
+    //     })()
+    // }, [router]);
 
     return (
         <Drawer

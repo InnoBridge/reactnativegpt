@@ -7,6 +7,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
+import { api, configuration } from "@innobridge/llmclient";
+
+const { createLlmClient } = api;
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 // Cache the Clerk JWT
@@ -51,15 +54,20 @@ function InitialLayout() {
   useEffect(() => {
     if (!isLoaded) return;
 
-    const inAuthGroup = segments[0] === '(protected)';
-    if (isSignedIn && !inAuthGroup) {
-      // Bring the user inside
-      // router.replace('/(protected)/(drawer)/(chat)/new');
-       router.replace('/(protected)/(drawer)/(chat)/new');
-    } else if (!isSignedIn) {
-      // Kick the user out
-      router.replace('/');
-    }
+    // Any async logic can go here before navigation
+    (async () => {
+      const inAuthGroup = segments[0] === '(protected)';
+      if (isSignedIn && !inAuthGroup) {
+        const config = await SecureStore.getItemAsync("llmConfig");
+        if (config) {
+          const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
+          await createLlmClient(savedConfig);
+        }  
+        router.replace('/(protected)/(drawer)/(chat)/new');
+      } else if (!isSignedIn) {
+        router.replace('/');
+      }
+    })();
   }, [isSignedIn]);
 
   if (!loaded || !isLoaded) {

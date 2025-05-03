@@ -25,27 +25,18 @@ const NewChat = () => {
     const [callingLlm, setCallingLlm] = useState(false);
 
     useEffect(() => {
-        (async () => {
-            const config = await SecureStore.getItemAsync("llmConfig");
-            let provider = getLlmProvider();
-            if (config && !provider) {
-                const savedConfig: configuration.LlmConfiguration = JSON.parse(config);
-                await createLlmClient(savedConfig);
-                provider = getLlmProvider();
-            }  
-
-            if (provider === null) {
-                console.log('No LLM provider set in new, redirecting to settings');
-                router.push("/(protected)/(modal)/settings");
-            } else {
-                setLlmProvider(provider);
-                const model = getModel();
-                setCurrentModel(model === null ? undefined : model);
-                getModels().then((models) => {
-                    setLlmModels(models.data);
-                });
-            }
-        })();
+        const provider = getLlmProvider();
+        if (provider === null) {
+            console.log('No LLM provider set, redirecting to settings');
+            router.replace("/(protected)/(modal)/settings");
+            return;
+        }
+        setLlmProvider(provider);
+        const model = getModel();
+        setCurrentModel(model === null ? undefined : model);
+        getModels().then((models) => {
+            setLlmModels(models.data);
+        });
     }, [router]);
 
     const getLlmModels = llmModels.map((model: model.Model) => {

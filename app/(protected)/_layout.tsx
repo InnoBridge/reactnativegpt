@@ -19,7 +19,9 @@ const layout = () => {
                     headerStyle: { backgroundColor: Colors.selected },
                     headerRight: () => (
                         <TouchableOpacity 
-                        onPress={() => {router.back()}}
+                        onPress={() => {
+                            router.replace('/(protected)/(drawer)' as any);
+                        }}
                         style={{ 
                             backgroundColor: Colors.greyLight,
                             borderRadius: 20,
