@@ -6,7 +6,7 @@ import { requestMessage, enums } from '@innobridge/llmclient';
 
 const { Role } = enums;
 
-type ChatMessageProps = requestMessage.Message & {
+export type ChatMessageProps = requestMessage.Message & {
     imageUrl?: string;
     prompt?: string;
 }
@@ -21,7 +21,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl, prom
             ) : (
                 <Image source={{ uri: 'https://galaxies.dev/img/meerkat_2.jpg'}} style={styles.avatar} />
             )}
-            <Text style={styles.text}>{content as string}</Text>
+            <View style={styles.contentContainer}>
+                <Text style={styles.text}>{content as string}</Text>
+                {imageUrl && (
+                    <Image source={{ uri: imageUrl }} style={styles.messageImage} />
+                )}
+            </View>
         </View>
     );
 };
@@ -50,11 +55,16 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         backgroundColor: Colors.black
     },
+    contentContainer: {
+        flex: 1,
+        flexDirection: 'column',
+        gap: 8,  // Space between text and image
+    },
     text: {
         padding: 4,
         fontSize: 16,
         flexWrap: 'wrap',
-        flex: 1
+        // flex: 1
     },
     previewImage: {
         width: 40,
@@ -65,6 +75,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         height: 26,
         marginLeft: 14
+    },
+    messageImage: {
+        width: 240,
+        height: 240,
+        borderRadius: 10
     }
 });
 
