@@ -20,27 +20,10 @@ import { ChatMessageProps } from "@/components/ChatMessage";
 const { getLlmProvider, getModel, getModels, setModel } = api;
 const { LlmProvider } = configuration;
 
-const initialMessages: ChatMessageProps[]  = [
-    {
-        role: enums.Role.ASSISTANT,
-        content: "Welcome to DALL-E! What would you like to create today?",
-        imageUrl: "https://galaxies.dev/img/meerkat_2.jpg",
-    },
-    {
-        role: enums.Role.USER,
-        content: "Generate an image of a cat in space",
-    },
-    {
-        role: enums.Role.BOT,
-        content: "Here is your image of a cat in space!",
-        imageUrl: "https://galaxies.dev/img/meerkat_2.jpg",
-    }
-]
-
 const Page = () => {
     const router = useRouter();
     const [height, setHeight] = useState(0);
-    const [messages, setMessages] = useState<ChatMessageProps[]>(initialMessages);
+    const [messages, setMessages] = useState<ChatMessageProps[]>([]);
     const [working, setWorking] = useState(false);
     const [llmProvider, setLlmProvider] = useState('');
     const [llmModels, setLlmModels] = useState<model.Model[]>([]);
@@ -94,7 +77,6 @@ const Page = () => {
 
         setMessages(updatedMessages);
 
-        setCallingImageModel(false);
         const chatRequest: generateImageRequest.GenerateImageRequest = {
             model: currentModel?.id,
             prompt: message,
