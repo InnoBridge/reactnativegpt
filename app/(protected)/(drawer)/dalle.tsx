@@ -4,7 +4,8 @@ import {
     Platform, 
     StyleSheet, 
     Image, 
-    Alert 
+    Alert,
+    Text
 } from "react-native";
 import { useState, useEffect } from "react";
 import { defaultStyles } from "@/constants/Styles";
@@ -12,7 +13,7 @@ import HeaderDropDown from "@/components/HeaderDropDown";
 import { Stack, useRouter } from "expo-router";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
-import { model, api, configuration, enums, generateImageRequest, imageResponse } from "@innobridge/llmclient";
+import { model, api, configuration, enums, generateImageRequest } from "@innobridge/llmclient";
 import ChatMessage from "@/components/ChatMessage";
 import MessageInput from "@/components/MessageInput";
 import { ChatMessageProps } from "@/components/ChatMessage";
@@ -24,7 +25,6 @@ const Page = () => {
     const router = useRouter();
     const [height, setHeight] = useState(0);
     const [messages, setMessages] = useState<ChatMessageProps[]>([]);
-    const [working, setWorking] = useState(false);
     const [llmProvider, setLlmProvider] = useState('');
     const [llmModels, setLlmModels] = useState<model.Model[]>([]);
     const [currentModel, setCurrentModel] = useState< model.Model | undefined>(undefined);
@@ -72,7 +72,8 @@ const Page = () => {
 
         const updatedMessages: ChatMessageProps[] = [
             ...messages, 
-            { content: message, role: enums.Role.USER }
+            { content: message, role: enums.Role.USER, loading: false },
+            { content: "Generating image...", role: enums.Role.BOT, loading: true }
         ];
 
         setMessages(updatedMessages);
@@ -89,11 +90,12 @@ const Page = () => {
             const response = await api.generateImage(chatRequest);
             if (response.data.length > 0) {
                 setMessages((prevMessages) => [
-                    ...prevMessages,
+                    ...prevMessages.slice(0, -1), // Remove the loading message
                     { 
-                        content: "here is yoru message", 
+                        content: "here is your message", 
                         role: enums.Role.BOT,
-                        imageUrl: response.data[0].url
+                        imageUrl: response.data[0].url,
+                        loading: false
                     }
                 ]);
             } else {
@@ -128,8 +130,11 @@ const Page = () => {
             />
             <View style={{ flex: 1 }} onLayout={onLayout}>
                 {messages.length === 0 && (
-                    <View style={[styles.logoContainer, { marginTop: height / 2 - 100 }]}>
-                        <Image source={require('@/assets/images/logo-white.png')} style={styles.image} />
+                    <View style={[{ marginTop: height / 2 - 100, alignItems: "center", gap: 16 }]}>
+                    <View style={[styles.logoContainer]}>
+                        <Image source={require('@/assets/images/dalle.png')} style={styles.image} />
+                    </View>
+                    <Text style={styles.label}>Let me turn your imagination into imagery.</Text>
                     </View>
                 )}
                 <FlashList
@@ -153,9 +158,6 @@ const Page = () => {
                 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
             >
-                {/* {messages.length === 0 && (
-                    <MessageIdeas onSelectCard={getCompletion} />
-                )} */}
                 <MessageInput 
                     disabled={callingImageModel}
                     onShouldSendMessage={generateImage} 
@@ -170,15 +172,20 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
-        width: 50,
-        height: 50,
+        width: 80,
+        height: 80,
         backgroundColor: Colors.black,
-        borderRadius: 50
+        borderRadius: 50,
+        overflow: 'hidden',
+        borderBlockColor: Colors.greyLight,
+        borderWidth: 1,
     },
     image: {
-        width: 30,
-        height: 30,
         resizeMode: 'cover'
+    },
+    label: {
+        fontSize: 16,
+        color: Colors.grey
     }
 });
 
