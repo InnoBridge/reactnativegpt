@@ -10,8 +10,10 @@ import MessageIdeas from "@/components/MessageIdeas";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
-import { api, model, chatRequest, enums, requestMessage } from "@innobridge/llmclient";
-const { getLlmProvider, getModels, getModel, setModel, createCompletion } = api;
+import { api, model, chatRequest, enums, requestMessage, chatCompletion } from "@innobridge/llmclient";
+import { fetch } from 'expo/fetch';
+
+const { getLlmProvider, getModels, getModel, setModel, reactNativeStreamingCompletion } = api;
 const { Role } = enums;
 
 const NewChat = () => {
@@ -66,14 +68,28 @@ const NewChat = () => {
 
         setMessages(updatedMessages);
         const chatRequest: chatRequest.ChatRequest = {
-            messages: updatedMessages,        
+            messages: updatedMessages,
+            stream: true   
         };
         try {
-            const response = await createCompletion(chatRequest);
             setMessages(prevMessages => [
                 ...prevMessages,
-                { content: response.choices[0].message.content as string, role: Role.BOT }
+                { content: "", role: Role.BOT }
             ]);
+            const listener = (completions: Array<chatCompletion.ChatCompletion>) => {
+                const chunk = (completions[0].choices[0] as chatCompletion.CompletionChunk).delta.content;
+                if (chunk === null) return;
+                setMessages(prevMessages => {
+                    const newMessages = [...prevMessages];
+                    const lastMessage = newMessages[newMessages.length - 1];
+                    if (lastMessage && lastMessage.role === Role.BOT) {
+                        lastMessage.content += chunk;
+                    }
+                    return newMessages;
+                    }
+                );
+            }
+            await reactNativeStreamingCompletion(chatRequest, fetch as unknown as typeof globalThis.fetch, listener);
         } catch (error) {
             Alert.alert('Error', 'Failed to get completion: ' + error);
         } finally {
