@@ -1,6 +1,5 @@
-import { StyleSheet } from 'react-native';
 import Colors from '@/constants/Colors';
-import { Text, View, Image } from 'react-native';
+import { Text, View, Image, ActivityIndicator, StyleSheet } from 'react-native';
 // import { Message, Role } from '@/utils/Interfaces';
 import { requestMessage, enums } from '@innobridge/llmclient';
 
@@ -9,9 +8,15 @@ const { Role } = enums;
 export type ChatMessageProps = requestMessage.Message & {
     imageUrl?: string;
     prompt?: string;
+    loading?: boolean;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl, prompt }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ 
+    content, 
+    role, 
+    imageUrl, 
+    prompt,
+    loading}) => {
     return (
         <View style={styles.row}>
             {role === Role.BOT ? (
@@ -21,12 +26,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, role, imageUrl, prom
             ) : (
                 <Image source={{ uri: 'https://galaxies.dev/img/meerkat_2.jpg'}} style={styles.avatar} />
             )}
+            {loading ? (
+                <View style={styles.loading}>
+                    <ActivityIndicator color={Colors.primary} />
+                </View>
+                ): (
             <View style={styles.contentContainer}>
                 <Text style={styles.text}>{content as string}</Text>
                 {imageUrl && (
                     <Image source={{ uri: imageUrl }} style={styles.messageImage} />
                 )}
             </View>
+                )}
         </View>
     );
 };
