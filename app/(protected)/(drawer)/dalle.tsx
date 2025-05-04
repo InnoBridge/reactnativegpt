@@ -1,13 +1,21 @@
-import { View, KeyboardAvoidingView, Platform, StyleSheet, Image } from "react-native";
+import { 
+    View, 
+    KeyboardAvoidingView, 
+    Platform, 
+    StyleSheet, 
+    Image, 
+    Alert 
+} from "react-native";
 import { useState, useEffect } from "react";
 import { defaultStyles } from "@/constants/Styles";
 import HeaderDropDown from "@/components/HeaderDropDown";
 import { Stack, useRouter } from "expo-router";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
-import { model, api, requestMessage, configuration } from "@innobridge/llmclient";
+import { model, api, configuration, enums, generateImageRequest, imageResponse } from "@innobridge/llmclient";
 import ChatMessage from "@/components/ChatMessage";
 import MessageInput from "@/components/MessageInput";
+import { ChatMessageProps } from "@/components/ChatMessage";
 
 const { getLlmProvider, getModel, getModels, setModel } = api;
 const { LlmProvider } = configuration;
@@ -15,12 +23,12 @@ const { LlmProvider } = configuration;
 const Page = () => {
     const router = useRouter();
     const [height, setHeight] = useState(0);
-    const [messages, setMessages] = useState<requestMessage.Message[]>([]);
+    const [messages, setMessages] = useState<ChatMessageProps[]>([]);
     const [working, setWorking] = useState(false);
     const [llmProvider, setLlmProvider] = useState('');
     const [llmModels, setLlmModels] = useState<model.Model[]>([]);
     const [currentModel, setCurrentModel] = useState< model.Model | undefined>(undefined);
-    const [callingLlm, setCallingLlm] = useState(false);
+    const [callingImageModel, setCallingImageModel] = useState(false);
 
     useEffect(() => {
         const provider = getLlmProvider();
@@ -31,8 +39,9 @@ const Page = () => {
             setLlmProvider(provider);
             const model = getModel();
             setCurrentModel(model === null ? undefined : model);
+            const validModels = ["dall-e-3", "dall-e-2", "gpt-image-1"];
             getModels().then((models) => {
-                setLlmModels(models.data);
+                setLlmModels(models.data.filter((model) => validModels.includes(model.id)));
             });
         }
     }, [router]);
@@ -48,6 +57,53 @@ const Page = () => {
     const onLayout = (event: any) => {
         const { height } = event.nativeEvent.layout;
         setHeight(height);
+    };
+
+    const generateImage = async (message: string) => {
+        if (callingImageModel) return;
+        if (getModel() === null) {
+            Alert.alert('Error', 'No model set. Please set the model before sending a message.');
+            return;
+        }
+        if (messages.length === 0) {
+            // Create chat later, store to DB
+        }
+        setCallingImageModel(true);
+
+        const updatedMessages: ChatMessageProps[] = [
+            ...messages, 
+            { content: message, role: enums.Role.USER }
+        ];
+
+        setMessages(updatedMessages);
+
+        const chatRequest: generateImageRequest.GenerateImageRequest = {
+            model: currentModel?.id,
+            prompt: message,
+            n: 1,
+            size: enums.ImageSize.SIZE_256x256,
+            response_format: enums.ImageFormat.URL
+        }
+        try {
+
+            const response = await api.generateImage(chatRequest);
+            if (response.data.length > 0) {
+                setMessages((prevMessages) => [
+                    ...prevMessages,
+                    { 
+                        content: "here is yoru message", 
+                        role: enums.Role.BOT,
+                        imageUrl: response.data[0].url
+                    }
+                ]);
+            } else {
+                Alert.alert('Error', 'No image generated. Please try again.');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to generate image. Please try again.');
+        } finally {
+            setCallingImageModel(false);
+        }
     };
     
     return (
@@ -100,10 +156,10 @@ const Page = () => {
                 {/* {messages.length === 0 && (
                     <MessageIdeas onSelectCard={getCompletion} />
                 )} */}
-                {/* <MessageInput 
-                    disabled={callingLlm}
-                    onShouldSendMessage={getCompletion} 
-                /> */}
+                <MessageInput 
+                    disabled={callingImageModel}
+                    onShouldSendMessage={generateImage} 
+                />
             </KeyboardAvoidingView>
         </View>
     )
