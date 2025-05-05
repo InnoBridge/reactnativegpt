@@ -21,9 +21,7 @@ const saveFile = async (fileUri: string) => {
     switch (status) {
         case MediaLibrary.PermissionStatus.GRANTED:
             try {
-                console.log("File URI: ", fileUri);
                 const asset = await MediaLibrary.createAssetAsync(fileUri);
-                console.log("Asset: ", asset);
                 const album = await MediaLibrary.getAlbumAsync('Download');
                 if (album === null) {
                     const result = await MediaLibrary.createAlbumAsync('Download', asset, false);
