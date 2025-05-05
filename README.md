@@ -100,7 +100,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    - - Works with the app's private file storage
    - - Files are invisible to the user outside your app
    - - Uses the app's sandbox permissions
-   - - Files are deleted wehn app is uninstalled
+   - - Files are deleted when app is uninstalled
    - - Used for temporary files, app data, downloads
    - expo-sharing: Trigger share sheets to share content with another apps on the device
    - expo-clipboard: Copy and paste text between your app and other applications
