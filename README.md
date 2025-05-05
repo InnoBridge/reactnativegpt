@@ -63,7 +63,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    - - Saves media visible to the user in their Photos app
    - - Requires media library permissions
    - - Used for photos that should appear in user's gallery
-   to alow access add to plugins section of `app.json`
+   to allow access add to plugins section of `app.json`
    ```
        "plugins": [
       "expo-router",

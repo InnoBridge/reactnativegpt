@@ -57,7 +57,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 </View>
                 ): (
             <View style={styles.contentContainer}>
-                <Text style={styles.text}>{content as string} hello world</Text>
                 {imageUrl && (
                     <ContextMenu.Root>
                         <ContextMenu.Trigger>
