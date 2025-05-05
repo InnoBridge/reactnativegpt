@@ -1,7 +1,9 @@
 import Colors from '@/constants/Colors';
-import { Text, View, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text, View, Image, ActivityIndicator, StyleSheet, Pressable } from 'react-native';
 // import { Message, Role } from '@/utils/Interfaces';
 import { requestMessage, enums } from '@innobridge/llmclient';
+import * as ContextMenu from 'zeego/context-menu';
+import { downloadAndSaveImage, copyImageToClipboard, shareImage } from '@/utils/Image';
 
 const { Role } = enums;
 
@@ -17,6 +19,29 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     imageUrl, 
     prompt,
     loading}) => {
+    const contextItems = [
+        {
+            title: 'Copy',
+            systemIcon: 'doc.on.doc',
+            onPress: (imageUrl: string) => {
+                copyImageToClipboard(imageUrl);
+            }
+        },
+        {
+            title: "Save to Photos",
+            systemIcon: 'arrow.down.to.line',
+            onPress: (imageUrl: string) => {
+                downloadAndSaveImage(imageUrl);
+            }
+        },
+        {
+            title: 'Share',
+            systemIcon: 'square.and.arrow.up',
+            onPress: (imageUrl: string) => {
+                shareImage(imageUrl);
+            }
+        }
+    ];
     return (
         <View style={styles.row}>
             {role === Role.BOT ? (
@@ -32,9 +57,34 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 </View>
                 ): (
             <View style={styles.contentContainer}>
-                <Text style={styles.text}>{content as string}</Text>
+                <Text style={styles.text}>{content as string} hello world</Text>
                 {imageUrl && (
-                    <Image source={{ uri: imageUrl }} style={styles.messageImage} />
+                    <ContextMenu.Root>
+                        <ContextMenu.Trigger>
+                            <Pressable>
+                                <Image source={{ uri: imageUrl }} style={styles.messageImage} />
+                            </Pressable>
+                        </ContextMenu.Trigger>
+                        <ContextMenu.Content>
+                            <View style={{ padding: 10 }}>
+                            </View>
+                            {contextItems.map((item, index) => (
+                                <ContextMenu.Item
+                                    key={item.title}
+                                    onSelect={() => item.onPress(imageUrl)}
+                                >
+                                    <ContextMenu.ItemTitle>{item.title}</ContextMenu.ItemTitle>
+                                    <ContextMenu.ItemIcon 
+                                        ios={{ 
+                                            name: item.systemIcon as any,
+                                            pointSize: 18
+                                         }} 
+                                    />
+                                </ContextMenu.Item>
+                            ))}
+                            <ContextMenu.Separator />
+                        </ContextMenu.Content>
+                    </ContextMenu.Root>
                 )}
             </View>
                 )}

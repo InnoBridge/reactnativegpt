@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.reactnativegpt"
+      "bundleIdentifier": "com.anonymous.reactnativegpt",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save images."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,7 +38,15 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow ${PRODUCT_NAME} to access your photos.",
+          "savePhotosPermission": "Allow ${PRODUCT_NAME} to save photos.",
+          "isAccessMediaLibraryEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
