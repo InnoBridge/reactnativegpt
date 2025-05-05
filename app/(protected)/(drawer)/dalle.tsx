@@ -21,10 +21,19 @@ import { ChatMessageProps } from "@/components/ChatMessage";
 const { getLlmProvider, getModel, getModels, setModel } = api;
 const { LlmProvider } = configuration;
 
+const initialMessages: ChatMessageProps[] = [
+    {
+        content: "Welcome to DALL-E! What would you like to create?",
+        role: enums.Role.BOT,
+        loading: false,
+        imageUrl: "https://galaxies.dev/img/meerkat_2.jpg"
+    }
+];
+
 const Page = () => {
     const router = useRouter();
     const [height, setHeight] = useState(0);
-    const [messages, setMessages] = useState<ChatMessageProps[]>([]);
+    const [messages, setMessages] = useState<ChatMessageProps[]>(initialMessages);
     const [llmProvider, setLlmProvider] = useState('');
     const [llmModels, setLlmModels] = useState<model.Model[]>([]);
     const [currentModel, setCurrentModel] = useState< model.Model | undefined>(undefined);

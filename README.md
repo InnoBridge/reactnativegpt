@@ -55,6 +55,56 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```
    - react-native-mmkv: An ultra-fast encrypted key-value storage solution for react native applications (30x faster than AsyncStorage) that uses WeChat's MMKV C++ engine to securely store app data with minimal performance impact.
 
+   ```
+   npx expo install expo-media-library expo-file-system expo-sharing expo-clipboard
+   ```
+   - expo-media-library: Access and manage photos/videos in the device's media library
+   - - Works on the device's media gallery (Photos app)
+   - - Saves media visible to the user in their Photos app
+   - - Requires media library permissions
+   - - Used for photos that should appear in user's gallery
+   to allow access add to plugins section of `app.json`
+   ```
+       "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow ${PRODUCT_NAME} to access your photos.",
+          "savePhotosPermission": "Allow ${PRODUCT_NAME} to save photos.",
+          "isAccessMediaLibraryEnabled": true
+        }
+      ]
+    ],
+   ```
+   for ios add to ios section in `app.json`
+   ```
+       "ios": {
+         ...
+         "infoPlist": {
+            "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to save images."
+         }
+      }
+   ```
+   - expo-file-system: Read, write, and manage files with downloading capabilities and storage management
+   - - Works with the app's private file storage
+   - - Files are invisible to the user outside your app
+   - - Uses the app's sandbox permissions
+   - - Files are deleted when app is uninstalled
+   - - Used for temporary files, app data, downloads
+   - expo-sharing: Trigger share sheets to share content with another apps on the device
+   - expo-clipboard: Copy and paste text between your app and other applications
+   - - with out expo-clipboard, you need to write platform-specific native code to access the clipboard from your React Native app.
 
 3. Prebuild native IOS and Androd folders
    ```bash
