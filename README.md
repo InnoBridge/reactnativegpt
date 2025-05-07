@@ -119,6 +119,14 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    - react-native-root-toast: Non-blocking toast notification system that displays temporary messages similar to Android's native Toast, with customizable positioning and styling
    - react-native-root-siblings: Utility library that enables rendering components outside the main component tree, required for overlays like toasts and models to appear above all other UI elements
 
+
+   ```
+   npm install react-native-shimmer-placeholder --save
+   npx expo install expo-linear-gradient
+   ```
+   - react-native-shimmer-placeholder: is a UI loading component that creates animated shimmer effects for content placeholders while data is loading.
+   - expo-linear-gradient: A component that renders a gradient view which transitions smoothly between multiple colors, essential for creating modern UI elements with color blending effects.
+
 3. Prebuild native IOS and Androd folders
    ```bash
    npx expo prebuild
