@@ -96,6 +96,11 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
          }
       }
    ```
+   then run
+   ```
+   npx expo prebuild --clean
+   npm run ios
+   ```
    - expo-file-system: Read, write, and manage files with downloading capabilities and storage management
    - - Works with the app's private file storage
    - - Files are invisible to the user outside your app
@@ -105,6 +110,14 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    - expo-sharing: Trigger share sheets to share content with another apps on the device
    - expo-clipboard: Copy and paste text between your app and other applications
    - - with out expo-clipboard, you need to write platform-specific native code to access the clipboard from your React Native app.
+
+   ```
+   npm install @likashefqet/react-native-image-zoom @gorhom/bottom-sheet@^4 react-native-root-toast react-native-root-siblings@^4.0.0
+   ```
+   - react-native-image-zoom: Provides interactive image viewing with pinch-to-zoom, pan gestures, and double-tap functionality for enhanced media viewing experiences
+   - bottom-sheet: Highly customizable bottom sheet component with smooth animations, snap points, and gesture handling for modal-like interfaces from the bottom of the screen
+   - react-native-root-toast: Non-blocking toast notification system that displays temporary messages similar to Android's native Toast, with customizable positioning and styling
+   - react-native-root-siblings: Utility library that enables rendering components outside the main component tree, required for overlays like toasts and models to appear above all other UI elements
 
 3. Prebuild native IOS and Androd folders
    ```bash

@@ -42,7 +42,11 @@ const Page = () => {
             await SecureStore.setItemAsync('llmConfig', JSON.stringify(configuration));
                         
             // Only navigate on success
-            router.replace('/(protected)/(drawer)' as any);
+            if (router.canGoBack()) {
+                return router.back();
+            } else {
+                return router.replace('/(protected)/(drawer)/(chat)' as any);
+            }
         } catch (err) {
             // Handle any errors
             Alert.alert('Failed to create LLM client:' + err);
@@ -53,7 +57,8 @@ const Page = () => {
         clearLlmClient();
         await SecureStore.deleteItemAsync("llmConfig");
         setLlmProvider(null);
-        router.replace('/(protected)/(drawer)' as any);
+     
+        router.replace('/(protected)/(modal)/settings' as any);    
     }
 
     // Render appropriate configuration form based on provider

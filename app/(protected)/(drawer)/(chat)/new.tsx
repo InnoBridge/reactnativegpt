@@ -12,6 +12,8 @@ import { FlashList } from "@shopify/flash-list";
 import ChatMessage from "@/components/ChatMessage";
 import { api, model, chatRequest, enums, requestMessage, chatCompletion } from "@innobridge/llmclient";
 import { fetch } from 'expo/fetch';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const { getLlmProvider, getModels, getModel, setModel, reactNativeStreamingCompletion } = api;
 const { Role } = enums;
@@ -25,20 +27,21 @@ const NewChat = () => {
     const [currentModel, setCurrentModel] = useState<model.Model | undefined>(undefined);
     const [callingLlm, setCallingLlm] = useState(false);
 
-    useEffect(() => {
-        const provider = getLlmProvider();
-        if (provider === null) {
-            console.log('No LLM provider set, redirecting to settings');
-            router.replace("/(protected)/(modal)/settings");
-            return;
-        }
-        setLlmProvider(provider);
-        const model = getModel();
-        setCurrentModel(model === null ? undefined : model);
-        getModels().then((models) => {
-            setLlmModels(models.data);
-        });
-    }, [router]);
+    useFocusEffect(
+        useCallback(() => {
+            const provider = getLlmProvider();
+            if (provider === null) {
+                router.replace("/(protected)/(modal)/settings");
+                return;
+            }
+            setLlmProvider(provider);
+            const model = getModel();
+            setCurrentModel(model === null ? undefined : model);
+            getModels().then((models) => {
+                setLlmModels(models.data);
+            });
+        }, [])
+    );
 
     const getLlmModels = llmModels.map((model: model.Model) => {
         return {
@@ -74,7 +77,7 @@ const NewChat = () => {
         try {
             setMessages(prevMessages => [
                 ...prevMessages,
-                { content: "", role: Role.BOT }
+                { content: "", role: Role.SYSTEM }
             ]);
             const listener = (completions: Array<chatCompletion.ChatCompletion>) => {
                 const chunk = (completions[0].choices[0] as chatCompletion.CompletionChunk).delta.content;
@@ -82,7 +85,7 @@ const NewChat = () => {
                 setMessages(prevMessages => {
                     const newMessages = [...prevMessages];
                     const lastMessage = newMessages[newMessages.length - 1];
-                    if (lastMessage && lastMessage.role === Role.BOT) {
+                    if (lastMessage && lastMessage.role === Role.SYSTEM) {
                         lastMessage.content += chunk;
                     }
                     return newMessages;

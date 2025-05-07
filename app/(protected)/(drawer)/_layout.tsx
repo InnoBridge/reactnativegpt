@@ -7,9 +7,9 @@ import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItemList,useDrawerStatus } from '@react-navigation/drawer';
 import { TextInput } from 'react-native-gesture-handler';
 import { DrawerActions } from '@react-navigation/native';
-import { useEffect } from 'react';
 import { api, configuration } from '@innobridge/llmclient';
-import * as SecureStore from 'expo-secure-store';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { getLlmProvider, createLlmClient } = api;
 const { LlmProvider } = configuration;
@@ -21,7 +21,6 @@ export const CustomDrawerContent = (props: any) => {
     const isDrawerOpen = useDrawerStatus() === 'open';
     // const [history, setHistory] = useState<Chat[]>([]);    
     // const router = useRouter();
-
 
     // useEffect(() => {
     //     loadChats();
@@ -82,7 +81,7 @@ export const CustomDrawerContent = (props: any) => {
                 backgroundColor: Colors.light
             }}>
                 <TouchableOpacity
-                    onPress={() => router.replace("/(protected)/(modal)/settings")}
+                    onPress={() => router.push("/(protected)/(modal)/settings")}
                     style={styles.footer}>
                     <Text>Settings</Text>
                     <Ionicons name="settings-outline" size={24} color={Colors.greyLight} />
@@ -95,7 +94,17 @@ export const CustomDrawerContent = (props: any) => {
 const Layout = () => {
     const dimensions = useWindowDimensions();
     const router = useRouter();
+    
+    const [showDalle, setShowDalle] = useState(false);
 
+    // This effect runs EVERY time the screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            const isOpenAI = getLlmProvider() === LlmProvider.OPENAI;
+            setShowDalle(isOpenAI);
+            return () => {};
+        }, [])
+    );
     return (
         <Drawer
             drawerContent={CustomDrawerContent}
@@ -185,7 +194,7 @@ const Layout = () => {
                     ),
                     drawerItemStyle: {
                         display:
-                          getLlmProvider() === LlmProvider.OPENAI
+                        showDalle
                             ? "flex"
                             : "none",
                     },
