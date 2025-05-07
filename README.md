@@ -125,7 +125,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo install expo-linear-gradient
    ```
    - react-native-shimmer-placeholder: is a UI loading component that creates animated shimmer effects for content placeholders while data is loading.
-   - expo-linear-gradient: A component ath renders a gradient view which transitions smoothly between multipl colors, essential for creating modern UI elements with color blending effects.
+   - expo-linear-gradient: A component that renders a gradient view which transitions smoothly between multiple colors, essential for creating modern UI elements with color blending effects.
 
 3. Prebuild native IOS and Androd folders
    ```bash

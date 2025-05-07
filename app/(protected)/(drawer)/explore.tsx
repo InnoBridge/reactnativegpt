@@ -85,7 +85,7 @@ const Page = () => {
                         <BlurView 
                             intensity={60} 
                             tint='light'
-                            style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(256, 256, 256, 0.5)' }]} 
+                            style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 255, 255, 0.5)' }]} 
                         />
                     ),
                     headerTransparent: true,
