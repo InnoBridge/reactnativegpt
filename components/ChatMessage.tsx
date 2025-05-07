@@ -1,6 +1,6 @@
 import Colors from '@/constants/Colors';
 import { Text, View, Image, ActivityIndicator, StyleSheet, Pressable } from 'react-native';
-// import { Message, Role } from '@/utils/Interfaces';
+import { Link, RelativePathString } from 'expo-router';
 import { requestMessage, enums } from '@innobridge/llmclient';
 import * as ContextMenu from 'zeego/context-menu';
 import { downloadAndSaveImage, copyImageToClipboard, shareImage } from '@/utils/Image';
@@ -42,9 +42,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             }
         }
     ];
+
     return (
         <View style={styles.row}>
-            {role === Role.BOT ? (
+            {role === Role.SYSTEM ? (
                 <View style={[styles.item]}>
                     <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
                 </View>
@@ -60,9 +61,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 {imageUrl && (
                     <ContextMenu.Root>
                         <ContextMenu.Trigger>
-                            <Pressable>
-                                <Image source={{ uri: imageUrl }} style={styles.messageImage} />
-                            </Pressable>
+                            <Link
+                                href={{
+                                    pathname: `/(protected)/(modal)/[url]` as RelativePathString,
+                                    params: { 
+                                        url: imageUrl,
+                                        prompt: prompt
+                                     }
+                                }}
+                            asChild>
+                                <Pressable>
+                                    <Image source={{ uri: imageUrl }} style={styles.messageImage} />
+                                </Pressable>
+                            </Link>
                         </ContextMenu.Trigger>
                         <ContextMenu.Content>
                             <View style={{ padding: 10 }}>
@@ -85,6 +96,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                         </ContextMenu.Content>
                     </ContextMenu.Root>
                 )}
+                <Text style={styles.text}>{content as string}</Text>
             </View>
                 )}
         </View>
