@@ -6,7 +6,8 @@ import {
     StyleSheet, 
     TouchableOpacity, 
     useWindowDimensions, 
-    Keyboard } from 'react-native';
+    Keyboard,
+    Alert } from 'react-native';
 import Colors from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
@@ -18,7 +19,7 @@ import { api, configuration } from '@innobridge/llmclient';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
-import { getChats } from '@/utils/Database';
+import { getChats, renameChat, deleteChat } from '@/utils/Database';
 import { useEffect } from 'react';
 import * as ContextMenu from 'zeego/context-menu';
 
@@ -36,7 +37,6 @@ export const CustomDrawerContent = (props: any) => {
     const db = useSQLiteContext();
     const isDrawerOpen = useDrawerStatus() === 'open';
     const [history, setHistory] = useState<Chat[]>([]);    
-    // const router = useRouter();
 
     useEffect(() => {
         loadChats();
@@ -44,27 +44,34 @@ export const CustomDrawerContent = (props: any) => {
     }, [isDrawerOpen]);
 
     const loadChats = async () => {
-        // Load chats from SQLite
         const result = (await getChats(db)) as Chat[];
         setHistory(result);
     };
 
-    // const onDeleteChat = (chatId: number) => {
-    //     Alert.alert('Delete Chat', 'Are you sure you want to delete this chat?', [
-    //         {
-    //             text: 'Cancel',
-    //             style: 'cancel'
-    //         },
-    //         {
-    //             text: 'Delete',
-    //             onPress: async () => {
-    //                 // Delete the chat
-    //                 await dismissBrowser.runAsync('DELETE FROM chats Where id = ?', chatId);
-    //                 loadChats();
-    //             }
-    //         }
-    //     ]);
-    // };
+    const onRenameChat = (chatId: number) => {
+        Alert.prompt('Rename Chat', 'Are you sure you want to delete this chat?', 
+            async (newName) => {
+                await renameChat(db, chatId, newName);
+            }
+        );
+    }
+
+    const onDeleteChat = (chatId: number) => {
+        Alert.alert('Delete Chat', 'Are you sure you want to delete this chat?', [
+            {
+                text: 'Cancel',
+                style: 'cancel'
+            },
+            {
+                text: 'Delete',
+                onPress: async () => {
+                    // Delete the chat
+                    await deleteChat(db, chatId);
+                    loadChats();
+                }
+            }
+        ]);
+    };
 
     return (
         <View style={{ flex: 1, marginTop: top }}>
@@ -88,11 +95,48 @@ export const CustomDrawerContent = (props: any) => {
                                 inactiveTintColor={Colors.black}
                                 />
                         </ContextMenu.Trigger>
+                        <ContextMenu.Content>
+                            <ContextMenu.Preview>
+                                {() => (
+                                <View style={{ padding: 16, height: 200, backgroundColor: '#fff' }}>
+                                    <Text>{chat.title}</Text>
+                                </View>
+                                )}
+                            </ContextMenu.Preview>
+
+                            <ContextMenu.Item 
+                                key={'rename'} 
+                                onSelect={() => onRenameChat(chat.id)}
+                                destructive
+                                >
+                                <ContextMenu.ItemTitle>Rename</ContextMenu.ItemTitle>
+                                <ContextMenu.ItemIcon
+                                    ios={{ 
+                                        name: 'pencil' as any,
+                                        pointSize: 18
+                                    }}/>
+                            </ContextMenu.Item>
+
+                            <ContextMenu.Item 
+                                key={'delete'} 
+                                onSelect={() => onDeleteChat(chat.id)}
+                                destructive
+                                >
+                                <ContextMenu.ItemTitle>Delete</ContextMenu.ItemTitle>
+                                <ContextMenu.ItemIcon
+                                    ios={{ 
+                                        name: 'trash' as any,
+                                        pointSize: 18
+                                    }}/>
+                            </ContextMenu.Item>
+                        </ContextMenu.Content>
+
                     </ContextMenu.Root>
+       
                 ))}
 
             </DrawerContentScrollView>
-            <View style={{ padding: 16, paddingBottom: bottom }}>
+            <View style={{ padding: 16, paddingBottom: bottom }} >
                 <TouchableOpacity style={styles.footer}>
                     <Image
                         source={{ uri: 'https://galaxies.dev/img/meerkat_2.jpg' }}
