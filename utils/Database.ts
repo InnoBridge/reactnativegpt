@@ -76,5 +76,5 @@ export const deleteChat = async (db: SQLiteDatabase, chatId: number) => {
 };
 
 export const renameChat = async (db: SQLiteDatabase, chatId: number, title: string) => {
-    return await db.runAsync('UPDATE chats SET title = ? WHERE id = ?', title,)
+    return await db.runAsync('UPDATE chats SET title = ? WHERE id = ?', title, chatId);
 };
