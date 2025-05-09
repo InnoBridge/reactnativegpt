@@ -127,6 +127,11 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    - react-native-shimmer-placeholder: is a UI loading component that creates animated shimmer effects for content placeholders while data is loading.
    - expo-linear-gradient: A component that renders a gradient view which transitions smoothly between multiple colors, essential for creating modern UI elements with color blending effects.
 
+   ```
+   npx expo install expo-sqlite 
+   ```
+   - expo-sqlite: A SQLite database implementation tha provides persistent local storage for structured data through SQL queries, allowing apps to create, access and manage relational database tables directly on the device.
+
 3. Prebuild native IOS and Androd folders
    ```bash
    npx expo prebuild

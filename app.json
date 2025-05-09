@@ -46,7 +46,8 @@
           "savePhotosPermission": "Allow ${PRODUCT_NAME} to save photos.",
           "isAccessMediaLibraryEnabled": true
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

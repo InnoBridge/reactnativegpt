@@ -1,37 +1,53 @@
 import { Drawer } from 'expo-router/drawer';
-import { View, Text, Image, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { 
+    View, 
+    Text, 
+    Image, 
+    StyleSheet, 
+    TouchableOpacity, 
+    useWindowDimensions, 
+    Keyboard } from 'react-native';
 import Colors from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import { FontAwesome6, Ionicons } from '@expo/vector-icons';
-import { DrawerContentScrollView, DrawerItemList,useDrawerStatus } from '@react-navigation/drawer';
+import { DrawerContentScrollView, DrawerItem, DrawerItemList, useDrawerStatus } from '@react-navigation/drawer';
 import { TextInput } from 'react-native-gesture-handler';
 import { DrawerActions } from '@react-navigation/native';
 import { api, configuration } from '@innobridge/llmclient';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSQLiteContext } from 'expo-sqlite';
+import { getChats } from '@/utils/Database';
+import { useEffect } from 'react';
+import * as ContextMenu from 'zeego/context-menu';
 
-const { getLlmProvider, createLlmClient } = api;
+const { getLlmProvider } = api;
 const { LlmProvider } = configuration;
+
+interface Chat {
+    id: number;
+    title: string;
+}
 
 export const CustomDrawerContent = (props: any) => {
     const router = useRouter();
     const { bottom, top } = useSafeAreaInsets();
-    // const db = useSQLiteContex();
+    const db = useSQLiteContext();
     const isDrawerOpen = useDrawerStatus() === 'open';
-    // const [history, setHistory] = useState<Chat[]>([]);    
+    const [history, setHistory] = useState<Chat[]>([]);    
     // const router = useRouter();
 
-    // useEffect(() => {
-    //     loadChats();
-    //     Keyboard.dismiss();
-    // }, [isDrawerOpen]);
+    useEffect(() => {
+        loadChats();
+        Keyboard.dismiss();
+    }, [isDrawerOpen]);
 
-    // const loadChats = async () => {
-    //     // Load chats from SQLite
-    //     const result = (await getChats(db)) as Chat[];
-    //     setHistory(result);
-    // };
+    const loadChats = async () => {
+        // Load chats from SQLite
+        const result = (await getChats(db)) as Chat[];
+        setHistory(result);
+    };
 
     // const onDeleteChat = (chatId: number) => {
     //     Alert.alert('Delete Chat', 'Are you sure you want to delete this chat?', [
@@ -62,6 +78,19 @@ export const CustomDrawerContent = (props: any) => {
             contentContainerStyle={{ paddingTop: 0 }}
             {...props}>
                 <DrawerItemList {...props} />
+
+                {history.map((chat) => (
+                    <ContextMenu.Root key={chat.id}>
+                        <ContextMenu.Trigger>
+                            <DrawerItem
+                                label={chat.title}
+                                onPress={() => router.replace(`/(protected)/(drawer)/(chat)/${chat.id}` as any)}
+                                inactiveTintColor={Colors.black}
+                                />
+                        </ContextMenu.Trigger>
+                    </ContextMenu.Root>
+                ))}
+
             </DrawerContentScrollView>
             <View style={{ padding: 16, paddingBottom: bottom }}>
                 <TouchableOpacity style={styles.footer}>
@@ -75,11 +104,11 @@ export const CustomDrawerContent = (props: any) => {
             </View>
 
             <View
-            style={{
-                padding: 16,
-                paddingBottom: 10 + bottom,
-                backgroundColor: Colors.light
-            }}>
+                style={{
+                    padding: 16,
+                    paddingBottom: 10 + bottom,
+                    backgroundColor: Colors.light
+                }}>
                 <TouchableOpacity
                     onPress={() => router.push("/(protected)/(modal)/settings")}
                     style={styles.footer}>
@@ -160,7 +189,7 @@ const Layout = () => {
                     )
                 }} 
             />
-            {/* <Drawer.Screen 
+            <Drawer.Screen 
                 name='(chat)/[id]' 
                 options={{
                     drawerItemStyle: {
@@ -179,7 +208,7 @@ const Layout = () => {
                         </Link>
                     )
                 }} 
-            /> */}
+            />
              <Drawer.Screen 
                 name='dalle' 
                 options={{
