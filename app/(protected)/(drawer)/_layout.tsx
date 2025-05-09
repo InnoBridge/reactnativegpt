@@ -49,7 +49,7 @@ export const CustomDrawerContent = (props: any) => {
     };
 
     const onRenameChat = (chatId: number) => {
-        Alert.prompt('Rename Chat', 'Are you sure you want to delete this chat?', 
+        Alert.prompt('Rename Chat', 'Are you sure you want to rename this chat?', 
             async (newName) => {
                 await renameChat(db, chatId, newName);
             }
