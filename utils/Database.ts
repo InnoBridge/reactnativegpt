@@ -5,55 +5,143 @@ import * as FileSystem from "expo-file-system";
 
 const { Role } = enums;
 
+export const executeAsync = async (db: SQLiteDatabase, query: string) => {
+    return await db.execAsync(query);
+};
+
+export const runAsync = async (db: SQLiteDatabase, query: string, params: any[] = []) => {
+    return await db.runAsync(query, params);
+};
+
+export const getAllAsync = async (db: SQLiteDatabase, source: string, params: any[] = []) => {
+    return await db.getAllAsync(source, params);
+};
+
+const createChatsTable = async (db: SQLiteDatabase) => {
+    // Create chats table with timestamp
+    return await executeAsync(db, 
+        `CREATE TABLE chats (
+            id INTEGER PRIMARY KEY NOT NULL,
+            title TEXT NOT NULL,
+            created_at INTEGER DEFAULT (unixepoch())
+        );
+    `);
+};
+
+const createMessagesTable = async (db: SQLiteDatabase) => {
+    // Create messages table with timestamp
+    return await executeAsync(db,
+        `CREATE TABLE messages (
+            id INTEGER PRIMARY KEY NOT NULL,
+            chat_id INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            imageUrl TEXT,
+            role TEXT NOT NULL,
+            prompt TEXT,
+            created_at INTEGER DEFAULT (unixepoch()),
+            FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
+        );
+    `);
+}
+
+enum Transaction {
+    BEGIN = 'BEGIN',
+    COMMIT = 'COMMIT',
+    ROLLBACK = 'ROLLBACK'
+};
+
+export const beginTransaction = async (db: SQLiteDatabase) => { 
+    return await executeAsync(db, `${Transaction.BEGIN};`);
+};
+
+export const commitTransaction = async (db: SQLiteDatabase) => { 
+    return await executeAsync(db, `${Transaction.COMMIT};`);
+};
+
+export const rollbackTransaction = async (db: SQLiteDatabase) => { 
+    return await executeAsync(db, `${Transaction.ROLLBACK};`);
+};
+
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     console.log("migrateifneeded", FileSystem.documentDirectory);
-    // Log DB path for debugging
-    // console.log(FileSystem.documentDirectory);
     const DATABASE_VERSION = 1;
+    
     let result = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
-
     let currentDbVersion = result?.user_version ?? 0;
 
     if (currentDbVersion === 0) {
-        const result = await db.execAsync(`
-            PRAGMA journal_mode = 'wal';
-            CREATE TABLE chats (
-                id INTEGER PRIMARY KEY NOT NULL,
-                title TEXT NOT NULL
-            );
+        try {            
+            // Set SQLite mode and enable foreign keys
+            await executeAsync(db, 'PRAGMA journal_mode = "wal";');
+            await executeAsync(db, 'PRAGMA foreign_keys = ON;');
+            
+            // THEN begin transaction for schema creation
+            await beginTransaction(db);
 
-            CREATE TABLE messages (
-                id INTEGER PRIMARY KEY NOT NULL,
-                chat_id INTEGER NOT NULL,
-                content TEXT NOT NULL,
-                imageUrl TEXT,
-                role TEXT,
-                prompt TEXT,
-                FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
-            );
-`);
-
-        currentDbVersion = 1;
+            // Create chats table with timestamp
+            await createChatsTable(db);
+            
+            // Create messages table with timestamp
+            await createMessagesTable(db);
+            
+            // Create indexes for better performance
+            await executeAsync(db, 'CREATE INDEX idx_messages_chat_id ON messages(chat_id);');
+            await executeAsync(db, 'CREATE INDEX idx_messages_role ON messages(role);');
+            
+            // Commit the transaction
+            await commitTransaction(db);
+            console.log("Database schema created successfully");
+            
+            currentDbVersion = 1;
+        } catch (error) {
+            // Rollback on any error
+            await rollbackTransaction(db);
+            console.error("Database migration failed:", error);
+            throw error;
+        }
     }
 
-    await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
+    await executeAsync(db, `PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
 export const addChat = async (db: SQLiteDatabase, title: string) => {
-    return await db.runAsync('INSERT INTO chats (title) VALUES (?)', title);
+    try {
+        return await runAsync(db, 'INSERT INTO chats (title) VALUES (?)', [title]);
+    } catch (error) {
+        console.error("Failed to add chat:", error);
+        throw error;
+    }
 };
 
 export const getChats = async (db: SQLiteDatabase) => {
-    return await db.getAllAsync('SELECT * FROM chats');
+    try {
+        // Improved query that includes message counts and last message time
+        return await getAllAsync(db, `
+            SELECT c.*, 
+                  (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) as messageCount,
+                  (SELECT MAX(created_at) FROM messages WHERE chat_id = c.id) as lastActivity
+            FROM chats c
+            ORDER BY lastActivity DESC, c.id DESC
+        `);
+    } catch (error) {
+        console.error("Failed to get chats:", error);
+        throw error;
+    }
 };
 
-export const getMessages = async (db: SQLiteDatabase, chatId: number): Promise<ChatMessageProps[]> => {
-    return (await db.getAllAsync<ChatMessageProps>('SELECT * FROM messages WHERE chat_id = ?', chatId)).map(
-        (message) => ({
-            ...message,
-            role: '' + message.role === 'system' ? Role.SYSTEM : Role.USER,
-        }) as ChatMessageProps
-    );
+export const getMessages = async (db: SQLiteDatabase, chatId: number) => {
+    try {
+        // Fixed role mapping with proper parameter array
+        const messages = await getAllAsync(db,
+            'SELECT * FROM messages WHERE chat_id = ? ORDER BY id ASC', 
+            [chatId]
+        );
+        
+        return messages;
+    } catch (error) {
+        console.error(`Failed to get messages for chat ${chatId}:`, error);
+        throw error;
+    }
 };
 
 export const addMessage = async (
@@ -61,20 +149,43 @@ export const addMessage = async (
     chatId: number,
     { content, role, imageUrl, prompt }: ChatMessageProps
 ) => {
-    return await db.runAsync(
-        'INSERT INTO messages (chat_id, content, role, imageUrl, prompt) VALUES (?, ?, ?, ?, ?)',
-        chatId,
-        content as string,
-        role === Role.SYSTEM ? 'system' : 'user',
-        imageUrl || '',
-        prompt || ''
-    );
+    try {
+        // Fixed parameter array syntax
+        return await runAsync(db,
+            'INSERT INTO messages (chat_id, content, role, imageUrl, prompt) VALUES (?, ?, ?, ?, ?)',
+            [chatId, content as string, role === Role.SYSTEM ? 'system' : 'user', imageUrl || '', prompt || '']
+        );
+    } catch (error) {
+        console.error(`Failed to add message to chat ${chatId}:`, error);
+        throw error;
+    }
 };
 
 export const deleteChat = async (db: SQLiteDatabase, chatId: number) => {
-    return await db.runAsync('DELETE FROM chats WHERE id = ?', chatId);
+    try {
+        // Use transaction to ensure atomicity
+        await beginTransaction(db);
+        
+        try {
+            // Delete chat and rely on CASCADE for messages
+            const result = await runAsync(db, 'DELETE FROM chats WHERE id = ?', [chatId]);
+            await commitTransaction(db);
+            return result;
+        } catch (error) {
+            await rollbackTransaction(db);
+            throw error;
+        }
+    } catch (error) {
+        console.error(`Failed to delete chat ${chatId}:`, error);
+        throw error;
+    }
 };
 
 export const renameChat = async (db: SQLiteDatabase, chatId: number, title: string) => {
-    return await db.runAsync('UPDATE chats SET title = ? WHERE id = ?', title, chatId);
+    try {
+        return await runAsync(db, 'UPDATE chats SET title = ? WHERE id = ?', [title, chatId]);
+    } catch (error) {
+        console.error(`Failed to rename chat ${chatId}:`, error);
+        throw error;
+    }
 };

@@ -9,7 +9,7 @@ import MessageInput from "@/components/MessageInput";
 import MessageIdeas from "@/components/MessageIdeas";
 import Colors from "@/constants/Colors";
 import { FlashList } from "@shopify/flash-list";
-import ChatMessage from "@/components/ChatMessage";
+import ChatMessage, { ChatMessageProps } from "@/components/ChatMessage";
 import { api, model, chatRequest, enums, requestMessage, chatCompletion } from "@innobridge/llmclient";
 import { fetch } from 'expo/fetch';
 import { useFocusEffect } from '@react-navigation/native';
@@ -43,7 +43,7 @@ const NewChat = () => {
     useEffect(() => {
         (async () => {
             setChatId(Number(id));
-            const messages = await getMessages(db, Number(id));
+            const messages = await getMessages(db, Number(id)) as requestMessage.Message[];
             setMessages(messages);
         })();
     }, [id, router]);
@@ -65,7 +65,12 @@ const NewChat = () => {
                 setLlmModels(models.data);
             });
             setChatId(Number(id));
-            const messages = await getMessages(db, Number(id));
+
+            const messages = (await getMessages(db, Number(id)))
+                .map((message: any) => ({
+                    ...message,
+                    role: message.role === 'system' ? Role.SYSTEM : Role.USER,
+                })) as ChatMessageProps[];
             setMessages(messages);
     })()}, [router])
     );
